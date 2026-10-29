@@ -4,9 +4,11 @@ import { Match, Schema } from 'effect'
 import * as Result from 'effect/Result'
 import { BrutalKill, GracefulKill, KillSignalDecision, PatientKill } from './KillSignalDecision.schema.js'
 
-export class SelectKillSignals extends Schema.TaggedClass<SelectKillSignals>()('SelectKillSignals', {
-  mode: Supervisor.Medium.ShutdownMode,
-}) {
+export class SelectKillSignals
+  extends Schema.TaggedClass<SelectKillSignals, { readonly brand: unique symbol }>()('SelectKillSignals', {
+    mode: Supervisor.Medium.ShutdownMode,
+  })
+{
   static readonly [Workflow.InstrumentationBrand] = {} as const
 }
 

@@ -99,7 +99,7 @@ Feature('An owner whose supervisor gives up')
           ({ failure }, expect) =>
             expect({
               error: failure.error,
-              name: failure.error.name,
+              name: failure.error.supervisor,
               defects: failure.error.cause.pipe(defectsOf),
               elapsed: failure.after - failure.before,
             }).toMatchObject({

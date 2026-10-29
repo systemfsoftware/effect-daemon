@@ -309,7 +309,7 @@ const executeTerminate = (
           Effect.asVoid(
             Deferred.fail(
               terminatedLatchOf(acquired.handle),
-              new SupervisorTerminated({ name: acquired.handle.name, reason: command.reason, cause }),
+              new SupervisorTerminated({ supervisor: acquired.handle.name, reason: command.reason, cause }),
             ),
           ),
         ))),

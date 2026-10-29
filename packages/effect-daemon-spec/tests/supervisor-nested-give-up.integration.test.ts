@@ -119,10 +119,10 @@ Feature('A supervisor giving up under another supervisor')
         ),
         Then('the owner sees a typed give-up naming the outer supervisor, whose cause carries the inner give-up')(
           ({ failure }, expect) => {
-            const innerNames = failure.cause.pipe(errorsOf).map((error) => error.name)
+            const innerNames = failure.cause.pipe(errorsOf).map((error) => error.supervisor)
             return expect({
               failure: failure,
-              name: failure.name,
+              name: failure.supervisor,
               innerNames,
             }).toMatchObject({
               failure: expect.schemaMatching(Supervisor.SupervisorTerminated),

@@ -4,12 +4,14 @@ import type { ObservedStep } from './Trace.schema.js'
 import { ObservedStep as ObservedStepSchema } from './Trace.schema.js'
 import { TraceComparison, TracesConform, TracesDiverge } from './TraceComparison.schema.js'
 
-export class CompareTraces extends Schema.TaggedClass<CompareTraces>()('CompareTraces', {
-  scenario: Schema.String,
-  medium: Schema.String,
-  reference: Schema.Array(ObservedStepSchema),
-  candidate: Schema.Array(ObservedStepSchema),
-}) {
+export class CompareTraces
+  extends Schema.TaggedClass<CompareTraces, { readonly brand: unique symbol }>()('CompareTraces', {
+    scenario: Schema.String,
+    medium: Schema.String,
+    reference: Schema.Array(ObservedStepSchema),
+    candidate: Schema.Array(ObservedStepSchema),
+  })
+{
   static readonly [Workflow.InstrumentationBrand] = {} as const
 }
 

@@ -38,33 +38,39 @@ export type SupervisorCore = typeof SupervisorCore.Type
 export const ChildStart = Schema.Struct({ childId: ChildId, generation: Generation })
 export type ChildStart = typeof ChildStart.Type
 
-export class Running extends Schema.TaggedClass<Running>()('Running', { core: SupervisorCore }) {
+export class Running
+  extends Schema.TaggedClass<Running, { readonly brand: unique symbol }>()('Running', { core: SupervisorCore })
+{
   readonly [StateTypeId] = StateTypeId
 }
 
-export class Restarting extends Schema.TaggedClass<Restarting>()('Restarting', {
+export class Restarting extends Schema.TaggedClass<Restarting, { readonly brand: unique symbol }>()('Restarting', {
   core: SupervisorCore,
   pending: Schema.Array(ChildStart),
 }) {
   readonly [StateTypeId] = StateTypeId
 }
 
-export class CoolingDown extends Schema.TaggedClass<CoolingDown>()('CoolingDown', {
+export class CoolingDown extends Schema.TaggedClass<CoolingDown, { readonly brand: unique symbol }>()('CoolingDown', {
   core: SupervisorCore,
   millis: PositiveMillis,
 }) {
   readonly [StateTypeId] = StateTypeId
 }
 
-export class ShuttingDown extends Schema.TaggedClass<ShuttingDown>()('ShuttingDown', {
-  core: SupervisorCore,
-  reason: TerminationReason,
-  exit: SupervisorExit,
-}) {
+export class ShuttingDown
+  extends Schema.TaggedClass<ShuttingDown, { readonly brand: unique symbol }>()('ShuttingDown', {
+    core: SupervisorCore,
+    reason: TerminationReason,
+    exit: SupervisorExit,
+  })
+{
   readonly [StateTypeId] = StateTypeId
 }
 
-export class Terminated extends Schema.TaggedClass<Terminated>()('Terminated', { reason: TerminationReason }) {
+export class Terminated extends Schema.TaggedClass<Terminated, { readonly brand: unique symbol }>()('Terminated', {
+  reason: TerminationReason,
+}) {
   readonly [StateTypeId] = StateTypeId
 }
 

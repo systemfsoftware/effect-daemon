@@ -6,14 +6,18 @@ const ProcessExitDecisionTypeId: unique symbol = Symbol.for(
 )
 type ProcessExitDecisionTypeId = typeof ProcessExitDecisionTypeId
 
-export class ProcessExitNormal extends Schema.TaggedClass<ProcessExitNormal>()('ProcessExitNormal', {}) {
+export class ProcessExitNormal
+  extends Schema.TaggedClass<ProcessExitNormal, { readonly brand: unique symbol }>()('ProcessExitNormal', {})
+{
   readonly [ProcessExitDecisionTypeId] = ProcessExitDecisionTypeId
 }
 
-export class ProcessExitAbnormal extends Schema.TaggedClass<ProcessExitAbnormal>()('ProcessExitAbnormal', {
-  code: Schema.Int,
-  signal: Schema.String,
-}) {
+export class ProcessExitAbnormal
+  extends Schema.TaggedClass<ProcessExitAbnormal, { readonly brand: unique symbol }>()('ProcessExitAbnormal', {
+    code: Schema.Int,
+    signal: Schema.String,
+  })
+{
   readonly [ProcessExitDecisionTypeId] = ProcessExitDecisionTypeId
 }
 

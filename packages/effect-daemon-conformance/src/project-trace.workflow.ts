@@ -8,26 +8,32 @@ const ProjectionTypeId: unique symbol = Symbol.for('@systemfsoftware/effect-daem
 type ProjectionTypeId = typeof ProjectionTypeId
 
 /** A declaration demanded no loss: the projected steps equal the trace's own. */
-export class TracePreserved extends Schema.TaggedClass<TracePreserved>()('TracePreserved', {
-  steps: Schema.Array(ObservedStepSchema),
-}) {
+export class TracePreserved
+  extends Schema.TaggedClass<TracePreserved, { readonly brand: unique symbol }>()('TracePreserved', {
+    steps: Schema.Array(ObservedStepSchema),
+  })
+{
   readonly [ProjectionTypeId] = ProjectionTypeId
 }
 
 /** A declaration erased something: a report was coarsened or a stop order relaxed. */
-export class TraceReduced extends Schema.TaggedClass<TraceReduced>()('TraceReduced', {
-  steps: Schema.Array(ObservedStepSchema),
-}) {
+export class TraceReduced
+  extends Schema.TaggedClass<TraceReduced, { readonly brand: unique symbol }>()('TraceReduced', {
+    steps: Schema.Array(ObservedStepSchema),
+  })
+{
   readonly [ProjectionTypeId] = ProjectionTypeId
 }
 
 export const TraceProjection = Schema.Union([TracePreserved, TraceReduced])
 export type TraceProjection = typeof TraceProjection.Type
 
-export class ProjectTrace extends Schema.TaggedClass<ProjectTrace>()('ProjectTrace', {
-  trace: ConformanceTrace,
-  declaration: Supervisor.Medium.MediumDeclaration,
-}) {
+export class ProjectTrace
+  extends Schema.TaggedClass<ProjectTrace, { readonly brand: unique symbol }>()('ProjectTrace', {
+    trace: ConformanceTrace,
+    declaration: Supervisor.Medium.MediumDeclaration,
+  })
+{
   static readonly [Workflow.InstrumentationBrand] = {} as const
 }
 
