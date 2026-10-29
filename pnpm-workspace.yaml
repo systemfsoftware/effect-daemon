@@ -1,0 +1,117 @@
+allowBuilds:
+  "@parcel/watcher": false
+  cpu-features: false
+  esbuild: false
+  msgpackr-extract: false
+  onnxruntime-node: false
+  playwright: false
+  protobufjs: false
+  sharp: false
+  ssh2: false
+  unrs-resolver: false
+catalog:
+  typescript: ^7.0.2
+  microsandbox: 0.7.8
+  "@systemfsoftware/arethetypeswrong-cli": ^4.2.0
+  "@effect/platform-node": ^4.0.5
+  "@effect/platform-bun": 4.0.5
+  "@effect/platform-node-shared": ^4.0.5
+  effect: ^4.0.5
+  "@effect/sql-pglite": ^4.0.5
+  "@effect/tsgo": ^0.51.1
+  "@effect/opentelemetry": ^4.0.5
+  "@opentelemetry/sdk-trace-base": ^2.12.0
+  "@opentelemetry/api": ^1.9.0
+  "@opentelemetry/resources": ^2.12.0
+  "@opentelemetry/semantic-conventions": ^1.43.0
+  fast-check: ^4.10.2
+  "@noble/hashes": ^2.4.0
+  vitest: ^5.0.5
+  "@vitest/coverage-v8": ^5.0.5
+  "@vitest/coverage-istanbul": ^5.0.5
+  vite: ^8.3.4
+  tsdown: ^0.23.0
+  rimraf: ^6.1.3
+  "@types/node": ^26.6.5
+  tstyche: ^7.2.5
+  "@microsoft/api-extractor": ^7.59.4
+  oxc-parser: ^0.153.0
+  "@oxc-project/types": ^0.153.0
+  "@testing-library/dom": ^10.4.2
+  "@testing-library/react": ^16.3.3
+  "@types/react": ^19.3.0
+  "@types/react-dom": ^19.3.0
+  "@types/scheduler": ^0.28.0
+  react: ^19.3.0
+  react-dom: ^19.3.0
+  react-error-boundary: ^6.1.6
+  scheduler: ^0.28.0
+  storybook: ^10.6.1
+  type-fest: ^5.10.0
+  "@storybook/addon-vitest": ^10.6.1
+  "@storybook/react-vite": ^10.6.1
+  "@vitest/browser": ^5.0.5
+  "@vitest/browser-playwright": ^5.0.5
+  playwright: ^1.64.0
+  "@pnpm/logger": ^1100.0.0
+  "@pnpm/workspace.projects-reader": ^1101.1.4
+  "@pnpm/workspace.root-finder": ^1100.1.3
+  "@pnpm/workspace.workspace-manifest-reader": ^1100.2.2
+catalogMode: prefer
+catalogs:
+  peers:
+    effect: ^4
+  oxlint:
+    oxlint: ~1.87.0
+    "@oxlint/plugins": ~1.87.0
+    oxlint-tsgolint: 7.0.2003
+  stryker:
+    "@systemfsoftware/stryker-ignorer-effect-schema-declarations": latest
+    "@systemfsoftware/stryker-ignorer-in-source-vitest-block": latest
+    "@systemfsoftware/stryker-js": latest
+    "@systemfsoftware/stryker-js-typescript-checker": latest
+    "@systemfsoftware/stryker-js-vitest-runner": latest
+    "mutation-testing-elements": 3.9.0
+minimumReleaseAge: 1440
+minimumReleaseAgeExclude:
+  - "@systemfsoftware/*"
+overrides:
+  # Core packages come from the core flake's tarballs (flake.nix sfs-deps), never from a registry.
+  "@systemfsoftware/conformance-spec": file:.sfs-deps/conformance-spec-1.0.1.tgz
+  "@systemfsoftware/effect-cell-types": file:.sfs-deps/effect-cell-types-12.0.2.tgz
+  "@systemfsoftware/effect-gherkin-spec": file:.sfs-deps/effect-gherkin-spec-8.0.0.tgz
+  "@systemfsoftware/effect-readiness": file:.sfs-deps/effect-readiness-1.1.1.tgz
+  "@systemfsoftware/effect-schema-discovery": file:.sfs-deps/effect-schema-discovery-2.0.1.tgz
+  "@systemfsoftware/effect-schema-law": file:.sfs-deps/effect-schema-law-6.1.0.tgz
+  "@systemfsoftware/effect-schema-recursion-budget": file:.sfs-deps/effect-schema-recursion-budget-2.0.1.tgz
+  "@systemfsoftware/effect-schema-vite": file:.sfs-deps/effect-schema-vite-3.1.1.tgz
+  "@systemfsoftware/effect-sim-kernel": file:.sfs-deps/effect-sim-kernel-2.0.0.tgz
+  "@systemfsoftware/effect-spec-runtime": file:.sfs-deps/effect-spec-runtime-1.1.0.tgz
+  "@systemfsoftware/oxlint-config-cell-architecture": file:.sfs-deps/oxlint-config-cell-architecture-5.0.0.tgz
+  "@systemfsoftware/oxlint-config-dmmf": file:.sfs-deps/oxlint-config-dmmf-3.0.0.tgz
+  "@systemfsoftware/oxlint-config-recommended": file:.sfs-deps/oxlint-config-recommended-5.0.0.tgz
+  "@systemfsoftware/oxlint-config-rule-authoring": file:.sfs-deps/oxlint-config-rule-authoring-2.0.0.tgz
+  "@systemfsoftware/oxlint-plugin-cell-architecture": file:.sfs-deps/oxlint-plugin-cell-architecture-6.0.0.tgz
+  "@systemfsoftware/oxlint-plugin-dmmf-workflow": file:.sfs-deps/oxlint-plugin-dmmf-workflow-7.1.0.tgz
+  "@systemfsoftware/oxlint-plugin-effect-platform": file:.sfs-deps/oxlint-plugin-effect-platform-2.1.0.tgz
+  "@systemfsoftware/oxlint-plugin-effect-schema": file:.sfs-deps/oxlint-plugin-effect-schema-6.0.1.tgz
+  "@systemfsoftware/oxlint-plugin-test-discipline": file:.sfs-deps/oxlint-plugin-test-discipline-6.0.0.tgz
+  "@systemfsoftware/stryker-config": file:.sfs-deps/stryker-config-0.2.0.tgz
+  "@systemfsoftware/tsconfig": file:.sfs-deps/tsconfig-2.0.2.tgz
+  "@systemfsoftware/tsdown-config": file:.sfs-deps/tsdown-config-0.1.1.tgz
+  "@systemfsoftware/vitest": file:.sfs-deps/vitest-3.0.0.tgz
+  "@systemfsoftware/vitest-config": file:.sfs-deps/vitest-config-0.1.1.tgz
+  fast-check: "catalog:"
+  vite: "catalog:"
+  # storybook's csf-plugin resolves esbuild 0.27 in its peer context while tsx
+  # uses 0.28; the split forks vite and therefore vitest into two physical builds
+  # per peer context. One esbuild keeps one vitest (issue #304 guard).
+  esbuild: ^0.28.2
+packages:
+  - packages/*
+patchedDependencies:
+  rolldown-plugin-dts@0.28.6: patches/rolldown-plugin-dts@0.28.6.patch
+supportedArchitectures:
+  os: [linux]
+  cpu: [x64, arm64]
+  libc: [glibc]

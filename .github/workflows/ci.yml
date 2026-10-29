@@ -1,0 +1,47 @@
+name: CI
+
+# Fast checks before the merge, heavy suites after it (owner, 2026-10-29: "They need to be fast with the heavier
+# checks on main"), the shape of core's #881. A pull request and a merge-queue draft run the static lane and the
+# `affected` lane (.github/ci/pr-tests.mjs), and their plan schedules no packed test job
+# (.github/ci/no-tests-before-merge.mjs). Main runs every package's whole suite in the packed test jobs.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  merge_group:
+  workflow_dispatch:
+# Every commit on main gets its own run and verdict; on any other ref a newer push cancels the superseded run.
+concurrency:
+  group: ci-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+  conflicts:
+    name: no merge conflicts
+    uses: systemfsoftware/systemfsoftware/.github/workflows/conflict-check.yml@21dfc32e9927c87a31a37d19e5643445a4e398c3
+    with:
+      base_ref: ${{ github.event.pull_request.base.ref }}
+      head_sha: ${{ github.event.pull_request.head.sha }}
+  checks:
+    name: build · lint · typecheck · test
+    needs: conflicts
+    permissions:
+      contents: read
+      actions: read
+    uses: systemfsoftware/systemfsoftware/.github/workflows/reusable-checks.yml@21dfc32e9927c87a31a37d19e5643445a4e398c3
+    with:
+      profile: ${{ github.ref == 'refs/heads/main' && 'per-change' || 'local' }}
+      record: test-timings-${{ github.ref == 'refs/heads/main' && 'per-change' || 'local' }}
+      timings: ${{ github.ref == 'refs/heads/main' && 'test-timings' || 'node .github/ci/no-tests-before-merge.mjs' }}
+      node-options: --max-old-space-size=4096
+      pnpm: corepack pnpm
+      test-flags: --output-logs=new-only --log-order=stream --log-prefix=none
+      gate-name: the gate (pnpm check:ci)
+      lanes: >-
+        ${{ github.ref == 'refs/heads/main'
+        && '[{"id": "static", "name": "static checks (pnpm check:static)", "timeout-minutes": 45, "node-options": "--max-old-space-size=4096", "run": "corepack pnpm check:static", "docs-run": "./bin/dprint check"}]'
+        || '[{"id": "static", "name": "static checks (pnpm check:static)", "timeout-minutes": 45, "node-options": "--max-old-space-size=4096", "run": "corepack pnpm check:static", "docs-run": "./bin/dprint check"}, {"id": "affected", "name": "affected tests (turbo --affected, vitest --changed)", "timeout-minutes": 30, "fetch-depth": 2, "node-options": "--max-old-space-size=4096"}]' }}

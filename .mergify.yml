@@ -1,0 +1,13 @@
+# Mergify: the policy lives in systemfsoftware/.github (.mergify.yml). This file only names this repository's checks.
+extends: .github
+
+queue_rules:
+  - name: default
+    queue_conditions:
+      - check-success = no merge conflicts
+      - check-success = build · lint · typecheck · test / static checks (pnpm check:static)
+      - or:
+          - check-success = commitlint / lint PR commits
+          - check-skipped = commitlint / lint PR commits
+    merge_conditions:
+      - check-success = build · lint · typecheck · test / the gate (pnpm check:ci)

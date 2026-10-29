@@ -1,0 +1,20 @@
+node_modules/
+dist/
+.turbo/
+coverage/
+.vitest/
+reports/
+__tmp__/
+.stryker-tmp/
+temp/
+*.tsbuildinfo
+.DS_Store
+.npmrc
+.direnv/
+/result
+/result-*
+/deno.lock
+.timings/
+.sfs-tools/
+# Core tarballs, built by `nix build .#sfs-deps` (CI: the sfs-deps job); never committed
+.sfs-deps/

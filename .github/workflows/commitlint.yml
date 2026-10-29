@@ -1,0 +1,13 @@
+name: Commitlint
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  commitlint:
+    name: commitlint
+    uses: systemfsoftware/systemfsoftware/.github/workflows/reusable-commitlint.yml@21dfc32e9927c87a31a37d19e5643445a4e398c3

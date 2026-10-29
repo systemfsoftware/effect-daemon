@@ -1,0 +1,116 @@
+name: effect-daemon checks lane
+description: effect-daemon's steps for each phase of systemfsoftware's reusable-checks.yml
+inputs:
+  lane:
+    description: plan, static, affected, test, test-after, timings, gate or docs
+    required: true
+  job:
+    description: The test job from the plan, as JSON
+    required: false
+    default: "{}"
+  profile:
+    description: Conformance profile, `local` (pull request) or `per-change` (main and the merge queue)
+    required: false
+    default: per-change
+runs:
+  using: composite
+  steps:
+    - if: inputs.lane == 'plan' || inputs.lane == 'timings'
+      uses: systemfsoftware/systemfsoftware/.github/actions/sfs-tools@21dfc32e9927c87a31a37d19e5643445a4e398c3
+      with:
+        repository: systemfsoftware/systemfsoftware
+        ref: 21dfc32e9927c87a31a37d19e5643445a4e398c3
+    - if: inputs.lane == 'plan'
+      shell: bash -e {0}
+      run: corepack enable
+
+    - name: Affected lane environment
+      if: inputs.lane == 'affected'
+      shell: bash -e {0}
+      run: printf 'CI=true\nCONFORMANCE_PROFILE=local\nTURBO_LOG_ORDER=stream\n' >> "$GITHUB_ENV"
+    - uses: systemfsoftware/systemfsoftware/.github/actions/install-deps@21dfc32e9927c87a31a37d19e5643445a4e398c3
+      if: inputs.lane == 'affected'
+    - name: Turbo cache
+      if: inputs.lane == 'affected'
+      uses: actions/cache@v6
+      with:
+        path: .turbo/cache
+        key: turbo-${{ runner.os }}-affected-${{ github.sha }}
+        restore-keys: |
+          turbo-${{ runner.os }}-affected-
+          turbo-${{ runner.os }}-checks-
+          turbo-${{ runner.os }}-
+    - name: The tests this change affects or touches
+      id: affected
+      if: inputs.lane == 'affected'
+      shell: bash -e {0}
+      run: node .github/ci/pr-tests.mjs plan
+    - name: Cache Playwright browsers
+      if: inputs.lane == 'affected' && steps.affected.outputs.browsers == 'true'
+      uses: actions/cache@v6
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: |
+          playwright-${{ runner.os }}-
+    - name: Install Playwright chromium
+      if: inputs.lane == 'affected' && steps.affected.outputs.browsers == 'true'
+      shell: bash -e {0}
+      env:
+        PACKAGE: ${{ steps.affected.outputs.browser-package }}
+      run: corepack pnpm --filter "$PACKAGE" exec playwright install --with-deps chromium
+    - name: Run them
+      if: inputs.lane == 'affected'
+      shell: bash -e {0}
+      env:
+        BASE: ${{ steps.affected.outputs.base }}
+      run: node .github/ci/pr-tests.mjs run
+
+    - name: Static lane environment
+      if: inputs.lane == 'static'
+      shell: bash -e {0}
+      run: printf 'CI=true\nOXLINT_FORMAT=github\nTSGO_FORMAT=github-actions\nTURBO_LOG_ORDER=stream\n' >> "$GITHUB_ENV"
+    - uses: systemfsoftware/systemfsoftware/.github/actions/install-deps@21dfc32e9927c87a31a37d19e5643445a4e398c3
+      if: inputs.lane == 'static'
+    - uses: cachix/install-nix-action@v31
+      if: inputs.lane == 'static' || inputs.lane == 'docs'
+    - name: dprint from the flake
+      if: inputs.lane == 'static' || inputs.lane == 'docs'
+      shell: bash -e {0}
+      run: echo "$(nix build --no-link --print-out-paths .#dprint)/bin" >> "$GITHUB_PATH"
+    - name: Turbo cache
+      if: inputs.lane == 'static'
+      uses: actions/cache@v6
+      with:
+        path: .turbo/cache
+        key: turbo-${{ runner.os }}-checks-${{ github.sha }}
+        restore-keys: |
+          turbo-${{ runner.os }}-checks-
+          turbo-${{ runner.os }}-
+
+    - name: Test lane environment
+      if: inputs.lane == 'test'
+      shell: bash -e {0}
+      run: printf 'CI=true\n' >> "$GITHUB_ENV"
+    - name: Local conformance profile
+      if: inputs.lane == 'test' && inputs.profile == 'local'
+      shell: bash -e {0}
+      run: printf 'CONFORMANCE_PROFILE=local\n' >> "$GITHUB_ENV"
+    - uses: systemfsoftware/systemfsoftware/.github/actions/install-deps@21dfc32e9927c87a31a37d19e5643445a4e398c3
+      if: inputs.lane == 'test'
+    - name: Turbo cache
+      if: inputs.lane == 'test'
+      uses: actions/cache@v6
+      with:
+        path: .turbo/cache
+        key: turbo-${{ runner.os }}-test-${{ fromJSON(inputs.job).id }}-${{ github.sha }}
+        restore-keys: |
+          turbo-${{ runner.os }}-test-${{ fromJSON(inputs.job).id }}-
+          turbo-${{ runner.os }}-checks-
+          turbo-${{ runner.os }}-
+    - name: Build
+      if: inputs.lane == 'test'
+      shell: bash -e {0}
+      env:
+        FILTERS: ${{ fromJSON(inputs.job).filters }}
+      run: corepack pnpm exec turbo run build --output-logs=errors-only --log-order=stream $FILTERS

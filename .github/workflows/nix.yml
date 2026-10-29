@@ -1,0 +1,21 @@
+name: Nix
+
+# Heavy: builds every flake output that changed. Runs on main and on demand, never on a pull request.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  nix:
+    name: nix
+    uses: systemfsoftware/systemfsoftware/.github/workflows/reusable-nix.yml@21dfc32e9927c87a31a37d19e5643445a4e398c3
+    with:
+      systems: '[{"system": "x86_64-linux", "runner": "ubuntu-latest"}]'

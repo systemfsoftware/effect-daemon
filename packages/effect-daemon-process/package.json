@@ -1,0 +1,95 @@
+{
+  "name": "@systemfsoftware/effect-daemon-process",
+  "license": "Apache-2.0",
+  "version": "1.0.3",
+  "author": "Ryan Lee <drdgvhbh@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/systemfsoftware/effect-daemon.git",
+    "directory": "packages/effect-daemon-process"
+  },
+  "homepage": "https://github.com/systemfsoftware/effect-daemon/tree/main/packages/effect-daemon-process#readme",
+  "bugs": "https://github.com/systemfsoftware/effect-daemon/issues",
+  "description": "The effect-daemon-spec medium over operating-system child processes — a command spec spawned through ChildProcessSpawner, its exit code and terminating signal reported as observed, and its shutdown mapped to SIGTERM and SIGKILL.",
+  "keywords": [
+    "effect",
+    "effect-ts",
+    "supervision",
+    "supervisor",
+    "daemon",
+    "process",
+    "child-process"
+  ],
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "@systemfsoftware/source": "./src/mod.ts",
+      "types": "./dist/mod.d.ts",
+      "default": "./dist/mod.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "clean": "rimraf dist",
+    "build": "tsdown -l warn && pnpm api:check",
+    "typecheck": "tsc -b",
+    "test": "vitest run --project unit",
+    "mutation": "stryker run",
+    "lint": "f=${OXLINT_FORMAT:-${AGENT:+agent}}; oxlint . --format=${f:-default}",
+    "attw": "attw --pack .",
+    "api:check": "api-extractor-quiet run",
+    "api:update": "api-extractor run --local"
+  },
+  "dependencies": {
+    "@systemfsoftware/effect-cell-types": "^12.0.2",
+    "@systemfsoftware/effect-daemon-conformance": "workspace:^",
+    "@systemfsoftware/effect-daemon-spec": "workspace:^"
+  },
+  "devDependencies": {
+    "@effect/platform-node-shared": "catalog:",
+    "@microsoft/api-extractor": "catalog:",
+    "@systemfsoftware/arethetypeswrong-cli": "catalog:",
+    "@systemfsoftware/conformance-spec": "^1.0.1",
+    "@systemfsoftware/effect-gherkin-spec": "^8.0.0",
+    "@systemfsoftware/effect-schema-law": "^6.1.0",
+    "@systemfsoftware/effect-schema-vite": "^3.1.1",
+    "@systemfsoftware/oxlint-config-recommended": "^5.0.0",
+    "@systemfsoftware/stryker-config": "^0.2.0",
+    "@systemfsoftware/stryker-ignorer-effect-schema-declarations": "catalog:stryker",
+    "@systemfsoftware/stryker-ignorer-in-source-vitest-block": "catalog:stryker",
+    "@systemfsoftware/stryker-js": "catalog:stryker",
+    "@systemfsoftware/stryker-js-typescript-checker": "catalog:stryker",
+    "@systemfsoftware/stryker-js-vitest-runner": "catalog:stryker",
+    "@systemfsoftware/tsconfig": "^2.0.2",
+    "@systemfsoftware/tsdown-config": "^0.1.1",
+    "@systemfsoftware/vitest": "^3.0.0",
+    "@systemfsoftware/vitest-config": "^0.1.1",
+    "@types/node": "catalog:",
+    "effect": "catalog:",
+    "oxlint": "catalog:oxlint",
+    "rimraf": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "effect": "catalog:peers",
+    "typescript": ">=7.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true,
+    "exports": {
+      ".": {
+        "types": "./dist/mod.d.ts",
+        "default": "./dist/mod.mjs"
+      },
+      "./package.json": "./package.json"
+    }
+  }
+}

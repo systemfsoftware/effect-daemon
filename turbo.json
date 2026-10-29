@@ -1,0 +1,196 @@
+{
+  "$schema": "https://v2-10-1.turborepo.dev/schema.json",
+  "agentGuidance": false,
+  "globalPassThroughEnv": [
+    "XDG_CACHE_HOME",
+    "PLAYWRIGHT_BROWSERS_PATH",
+    "VITEST_MAX_WORKERS"
+  ],
+  "tasks": {
+    "build": {
+      "outputLogs": "new-only",
+      "inputs": [
+        "src/**",
+        "lib/**",
+        "tsconfig.json",
+        "tsconfig.build.json",
+        "tsconfig.*.json",
+        "package.json",
+        "tsdown.config.*",
+        "api-extractor.json",
+        "api-extractor.*.json",
+        "etc/*.api.md"
+      ],
+      "outputs": [
+        "dist/**"
+      ],
+      "dependsOn": [
+        "^build"
+      ]
+    },
+    "typecheck": {
+      "outputLogs": "errors-only",
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "tsconfig.json",
+        "tsconfig.*.json",
+        "!**/*.md"
+      ],
+      "outputs": [],
+      "dependsOn": [
+        "^build",
+        "build"
+      ],
+      "cache": true
+    },
+    "test": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "vitest.config.ts",
+        "vitest.config.*",
+        "src/**/*.test.ts",
+        "src/**/*.spec.ts",
+        "!**/README.md",
+        "!**/AGENTS.md",
+        "!**/CHANGELOG.md",
+        "!**/etc/*.api.md"
+      ],
+      "outputLogs": "errors-only",
+      "dependsOn": [
+        "^build",
+        "build"
+      ],
+      "outputs": [
+        "coverage/**",
+        "reports/**"
+      ],
+      "env": [
+        "NODE_ENV",
+        "CI",
+        "AGENT",
+        "COVERAGE",
+        "CONFORMANCE_PROFILE"
+      ],
+      "cache": true
+    },
+    "test:engine": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "vitest.config.ts",
+        "vitest.config.*",
+        "!**/README.md",
+        "!**/AGENTS.md",
+        "!**/CHANGELOG.md",
+        "!**/etc/*.api.md"
+      ],
+      "outputLogs": "errors-only",
+      "dependsOn": [
+        "^build",
+        "build"
+      ],
+      "outputs": [],
+      "env": [
+        "NODE_ENV",
+        "CI",
+        "AGENT",
+        "CONFORMANCE_PROFILE"
+      ],
+      "cache": true
+    },
+    "test:types": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "tstyche.json",
+        "test-types/**",
+        "tsconfig.json",
+        "tsconfig.*.json",
+        "!**/*.md"
+      ],
+      "outputLogs": "errors-only",
+      "dependsOn": [
+        "^build",
+        "build"
+      ],
+      "outputs": [],
+      "cache": true
+    },
+    "mutation": {
+      "dependsOn": [
+        "^build"
+      ],
+      "env": [
+        "NODE_ENV",
+        "CI",
+        "AGENT"
+      ],
+      "cache": false
+    },
+    "lint": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "oxlint.config.ts",
+        "tsconfig.json",
+        "tsconfig.*.json",
+        "!**/*.md"
+      ],
+      "outputs": [],
+      "dependsOn": [
+        "^build",
+        "build"
+      ],
+      "env": [
+        "NODE_ENV",
+        "GITHUB_ACTIONS",
+        "OXLINT_FORMAT",
+        "AGENT"
+      ],
+      "cache": true
+    },
+    "lint:tsgo": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "tsconfig.json",
+        "tsconfig.*.json",
+        "!**/*.md"
+      ],
+      "outputs": [],
+      "env": [
+        "TSGO_FORMAT"
+      ],
+      "cache": true
+    },
+    "api:check": {
+      "outputLogs": "errors-only",
+      "inputs": [
+        "src/**",
+        "api-extractor.json",
+        "api-extractor.*.json",
+        "tsconfig.build.json",
+        "tsconfig.*.json",
+        "etc/*.api.md"
+      ],
+      "outputs": [
+        "dist/*.d.ts",
+        "etc/*.api.md",
+        "temp/**"
+      ],
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "clean": {
+      "cache": false
+    },
+    "attw": {
+      "outputLogs": "errors-only",
+      "inputs": [
+        "dist/**",
+        "package.json"
+      ],
+      "dependsOn": [
+        "^build",
+        "build"
+      ]
+    }
+  }
+}
