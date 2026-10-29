@@ -13,13 +13,13 @@ catalog:
   typescript: ^7.0.2
   microsandbox: 0.7.8
   "@systemfsoftware/arethetypeswrong-cli": ^4.2.0
-  "@effect/platform-node": ^4.0.5
-  "@effect/platform-bun": 4.0.5
-  "@effect/platform-node-shared": ^4.0.5
-  effect: ^4.0.5
-  "@effect/sql-pglite": ^4.0.5
-  "@effect/tsgo": ^0.51.1
-  "@effect/opentelemetry": ^4.0.5
+  "@effect/platform-node": ^4.1.0
+  "@effect/platform-bun": 4.1.0
+  "@effect/platform-node-shared": ^4.1.0
+  effect: ^4.1.0
+  "@effect/sql-pglite": ^4.1.0
+  "@effect/tsgo": ^0.63.0
+  "@effect/opentelemetry": ^4.1.0
   "@opentelemetry/sdk-trace-base": ^2.12.0
   "@opentelemetry/api": ^1.9.0
   "@opentelemetry/resources": ^2.12.0
@@ -62,9 +62,9 @@ catalogs:
   peers:
     effect: ^4
   oxlint:
-    oxlint: ~1.87.0
-    "@oxlint/plugins": ~1.87.0
-    oxlint-tsgolint: 7.0.2003
+    oxlint: ~1.90.0
+    "@oxlint/plugins": ~1.90.0
+    oxlint-tsgolint: 7.0.2005
   stryker:
     "@systemfsoftware/stryker-ignorer-effect-schema-declarations": latest
     "@systemfsoftware/stryker-ignorer-in-source-vitest-block": latest
@@ -74,6 +74,8 @@ catalogs:
     "mutation-testing-elements": 3.9.0
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
+  - effect
+  - "@effect/*"
   - "@systemfsoftware/*"
 overrides:
   # Core packages come from the core flake's tarballs (flake.nix sfs-deps), never from a registry.
@@ -101,6 +103,10 @@ overrides:
   "@systemfsoftware/tsdown-config": file:.sfs-deps/tsdown-config-0.1.1.tgz
   "@systemfsoftware/vitest": file:.sfs-deps/vitest-3.0.0.tgz
   "@systemfsoftware/vitest-config": file:.sfs-deps/vitest-config-0.1.1.tgz
+  effect: "catalog:"
+  "@effect/opentelemetry": "catalog:"
+  "@effect/platform-node": "catalog:"
+  "@effect/platform-node-shared": "catalog:"
   fast-check: "catalog:"
   vite: "catalog:"
   # storybook's csf-plugin resolves esbuild 0.27 in its peer context while tsx
