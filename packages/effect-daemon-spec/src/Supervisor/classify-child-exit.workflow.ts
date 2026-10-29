@@ -3,10 +3,12 @@ import { Cause, Exit, Match, Schema } from 'effect'
 import * as Result from 'effect/Result'
 import { AbnormalExit, ChildExitDecision, NormalExit, ShutdownExit } from './ChildExitDecision.schema.js'
 
-export class ClassifyChildExit extends Schema.TaggedClass<ClassifyChildExit>()('ClassifyChildExit', {
-  stopping: Schema.Boolean,
-  exit: Schema.Exit(Schema.Void, Schema.Unknown, Schema.Unknown),
-}) {
+export class ClassifyChildExit
+  extends Schema.TaggedClass<ClassifyChildExit, { readonly brand: unique symbol }>()('ClassifyChildExit', {
+    stopping: Schema.Boolean,
+    exit: Schema.Exit(Schema.Void, Schema.Unknown, Schema.Unknown),
+  })
+{
   static readonly [Workflow.InstrumentationBrand] = {} as const
 }
 

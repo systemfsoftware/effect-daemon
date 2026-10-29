@@ -4,9 +4,11 @@ import * as Result from 'effect/Result'
 import { ProcessExit } from './ProcessExit.schema.js'
 import { ProcessExitAbnormal, ProcessExitDecision, ProcessExitNormal } from './ProcessExitDecision.schema.js'
 
-export class ClassifyProcessExit extends Schema.TaggedClass<ClassifyProcessExit>()('ClassifyProcessExit', {
-  exit: ProcessExit,
-}) {
+export class ClassifyProcessExit
+  extends Schema.TaggedClass<ClassifyProcessExit, { readonly brand: unique symbol }>()('ClassifyProcessExit', {
+    exit: ProcessExit,
+  })
+{
   static readonly [Workflow.InstrumentationBrand] = {} as const
 }
 

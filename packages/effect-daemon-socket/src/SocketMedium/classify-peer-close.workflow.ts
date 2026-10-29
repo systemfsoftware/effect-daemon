@@ -7,20 +7,26 @@ const PeerCloseTypeId: unique symbol = Symbol.for(
 )
 type PeerCloseTypeId = typeof PeerCloseTypeId
 
-export class PeerClosedCleanly extends Schema.TaggedClass<PeerClosedCleanly>()('PeerClosedCleanly', {}) {
+export class PeerClosedCleanly
+  extends Schema.TaggedClass<PeerClosedCleanly, { readonly brand: unique symbol }>()('PeerClosedCleanly', {})
+{
   readonly [PeerCloseTypeId] = PeerCloseTypeId
 }
 
-export class PeerClosedAbnormally extends Schema.TaggedClass<PeerClosedAbnormally>()('PeerClosedAbnormally', {}) {
+export class PeerClosedAbnormally
+  extends Schema.TaggedClass<PeerClosedAbnormally, { readonly brand: unique symbol }>()('PeerClosedAbnormally', {})
+{
   readonly [PeerCloseTypeId] = PeerCloseTypeId
 }
 
 export const PeerCloseDecision = Schema.Union([PeerClosedCleanly, PeerClosedAbnormally])
 export type PeerCloseDecision = typeof PeerCloseDecision.Type
 
-export class ClassifyPeerClose extends Schema.TaggedClass<ClassifyPeerClose>()('ClassifyPeerClose', {
-  code: Schema.Int,
-}) {
+export class ClassifyPeerClose
+  extends Schema.TaggedClass<ClassifyPeerClose, { readonly brand: unique symbol }>()('ClassifyPeerClose', {
+    code: Schema.Int,
+  })
+{
   static readonly [Workflow.InstrumentationBrand] = {} as const
 }
 

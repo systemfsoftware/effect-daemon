@@ -6,17 +6,21 @@ const KillSignalDecisionTypeId: unique symbol = Symbol.for(
 )
 type KillSignalDecisionTypeId = typeof KillSignalDecisionTypeId
 
-export class BrutalKill extends Schema.TaggedClass<BrutalKill>()('BrutalKill', {}) {
+export class BrutalKill extends Schema.TaggedClass<BrutalKill, { readonly brand: unique symbol }>()('BrutalKill', {}) {
   readonly [KillSignalDecisionTypeId] = KillSignalDecisionTypeId
 }
 
-export class GracefulKill extends Schema.TaggedClass<GracefulKill>()('GracefulKill', {
-  forceKillAfterMillis: Schema.Int,
-}) {
+export class GracefulKill
+  extends Schema.TaggedClass<GracefulKill, { readonly brand: unique symbol }>()('GracefulKill', {
+    forceKillAfterMillis: Schema.Int,
+  })
+{
   readonly [KillSignalDecisionTypeId] = KillSignalDecisionTypeId
 }
 
-export class PatientKill extends Schema.TaggedClass<PatientKill>()('PatientKill', {}) {
+export class PatientKill
+  extends Schema.TaggedClass<PatientKill, { readonly brand: unique symbol }>()('PatientKill', {})
+{
   readonly [KillSignalDecisionTypeId] = KillSignalDecisionTypeId
 }
 

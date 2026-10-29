@@ -32,33 +32,37 @@ import { SupervisorExit, TerminationReason } from './TerminationReport.schema.js
 
 const DecisionTypeId: unique symbol = Symbol.for('@systemfsoftware/effect-daemon/SupervisionDecision')
 
-export class Stale extends Schema.TaggedClass<Stale>()('Stale', {}) {
+export class Stale extends Schema.TaggedClass<Stale, { readonly brand: unique symbol }>()('Stale', {}) {
   readonly [DecisionTypeId] = DecisionTypeId
 }
 
-export class Continue extends Schema.TaggedClass<Continue>()('Continue', {
+export class Continue extends Schema.TaggedClass<Continue, { readonly brand: unique symbol }>()('Continue', {
   core: SupervisorCore,
   commands: SupervisorCommands,
 }) {
   readonly [DecisionTypeId] = DecisionTypeId
 }
 
-export class RestartChildren extends Schema.TaggedClass<RestartChildren>()('RestartChildren', {
-  core: SupervisorCore,
-  pending: Schema.Array(ChildStart),
-  commands: SupervisorCommands,
-}) {
+export class RestartChildren
+  extends Schema.TaggedClass<RestartChildren, { readonly brand: unique symbol }>()('RestartChildren', {
+    core: SupervisorCore,
+    pending: Schema.Array(ChildStart),
+    commands: SupervisorCommands,
+  })
+{
   readonly [DecisionTypeId] = DecisionTypeId
 }
 
-export class StartChildren extends Schema.TaggedClass<StartChildren>()('StartChildren', {
-  core: SupervisorCore,
-  commands: SupervisorCommands,
-}) {
+export class StartChildren
+  extends Schema.TaggedClass<StartChildren, { readonly brand: unique symbol }>()('StartChildren', {
+    core: SupervisorCore,
+    commands: SupervisorCommands,
+  })
+{
   readonly [DecisionTypeId] = DecisionTypeId
 }
 
-export class CoolDown extends Schema.TaggedClass<CoolDown>()('CoolDown', {
+export class CoolDown extends Schema.TaggedClass<CoolDown, { readonly brand: unique symbol }>()('CoolDown', {
   core: SupervisorCore,
   millis: PositiveMillis,
   commands: SupervisorCommands,
@@ -66,25 +70,29 @@ export class CoolDown extends Schema.TaggedClass<CoolDown>()('CoolDown', {
   readonly [DecisionTypeId] = DecisionTypeId
 }
 
-export class StopChildren extends Schema.TaggedClass<StopChildren>()('StopChildren', {
-  core: SupervisorCore,
+export class StopChildren
+  extends Schema.TaggedClass<StopChildren, { readonly brand: unique symbol }>()('StopChildren', {
+    core: SupervisorCore,
+    reason: TerminationReason,
+    exit: SupervisorExit,
+    commands: SupervisorCommands,
+  })
+{
+  readonly [DecisionTypeId] = DecisionTypeId
+}
+
+export class Terminate extends Schema.TaggedClass<Terminate, { readonly brand: unique symbol }>()('Terminate', {
   reason: TerminationReason,
-  exit: SupervisorExit,
   commands: SupervisorCommands,
 }) {
   readonly [DecisionTypeId] = DecisionTypeId
 }
 
-export class Terminate extends Schema.TaggedClass<Terminate>()('Terminate', {
-  reason: TerminationReason,
-  commands: SupervisorCommands,
-}) {
-  readonly [DecisionTypeId] = DecisionTypeId
-}
-
-export class RefuseDynamicStart extends Schema.TaggedClass<RefuseDynamicStart>()('RefuseDynamicStart', {
-  commands: SupervisorCommands,
-}) {
+export class RefuseDynamicStart
+  extends Schema.TaggedClass<RefuseDynamicStart, { readonly brand: unique symbol }>()('RefuseDynamicStart', {
+    commands: SupervisorCommands,
+  })
+{
   readonly [DecisionTypeId] = DecisionTypeId
 }
 
@@ -100,10 +108,12 @@ export const SupervisionDecision = Schema.Union([
 ])
 export type SupervisionDecision = typeof SupervisionDecision.Type
 
-export class SupervisionStep extends Schema.TaggedClass<SupervisionStep>()('SupervisionStep', {
-  state: SupervisorState,
-  event: SupervisionEvent,
-}) {
+export class SupervisionStep
+  extends Schema.TaggedClass<SupervisionStep, { readonly brand: unique symbol }>()('SupervisionStep', {
+    state: SupervisorState,
+    event: SupervisionEvent,
+  })
+{
   static readonly [Workflow.InstrumentationBrand] = {} as const
 }
 

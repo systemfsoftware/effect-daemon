@@ -9,17 +9,21 @@ const ChildExitTypeId: unique symbol = Symbol.for(
 type ChildExitTypeId = typeof ChildExitTypeId
 
 /** The child ended on its own success. */
-export class NormalExit extends Schema.TaggedClass<NormalExit>()('Normal', {}) {
+export class NormalExit extends Schema.TaggedClass<NormalExit, { readonly brand: unique symbol }>()('Normal', {}) {
   readonly [ChildExitTypeId] = ChildExitTypeId
 }
 
 /** The child was interrupted — an owned shutdown, or one it raised itself. */
-export class ShutdownExit extends Schema.TaggedClass<ShutdownExit>()('Shutdown', {}) {
+export class ShutdownExit
+  extends Schema.TaggedClass<ShutdownExit, { readonly brand: unique symbol }>()('Shutdown', {})
+{
   readonly [ChildExitTypeId] = ChildExitTypeId
 }
 
 /** The child failed with something other than an interruption. */
-export class AbnormalExit extends Schema.TaggedClass<AbnormalExit>()('Abnormal', {}) {
+export class AbnormalExit
+  extends Schema.TaggedClass<AbnormalExit, { readonly brand: unique symbol }>()('Abnormal', {})
+{
   readonly [ChildExitTypeId] = ChildExitTypeId
 }
 

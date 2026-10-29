@@ -4,22 +4,26 @@ const ComparisonTypeId: unique symbol = Symbol.for('@systemfsoftware/effect-daem
 type ComparisonTypeId = typeof ComparisonTypeId
 
 /** The candidate reproduced the reference within its declaration. */
-export class TracesConform extends Schema.TaggedClass<TracesConform>()('TracesConform', {
-  scenario: Schema.String,
-  medium: Schema.String,
-  compared: Schema.Int,
-}) {
+export class TracesConform
+  extends Schema.TaggedClass<TracesConform, { readonly brand: unique symbol }>()('TracesConform', {
+    scenario: Schema.String,
+    medium: Schema.String,
+    compared: Schema.Int,
+  })
+{
   readonly [ComparisonTypeId] = ComparisonTypeId
 }
 
 /** The candidate first diverged from the reference at `index`. */
-export class TracesDiverge extends Schema.TaggedClass<TracesDiverge>()('TracesDiverge', {
-  scenario: Schema.String,
-  medium: Schema.String,
-  index: Schema.Int,
-  reference: Schema.String,
-  candidate: Schema.String,
-}) {
+export class TracesDiverge
+  extends Schema.TaggedClass<TracesDiverge, { readonly brand: unique symbol }>()('TracesDiverge', {
+    scenario: Schema.String,
+    medium: Schema.String,
+    index: Schema.Int,
+    reference: Schema.String,
+    candidate: Schema.String,
+  })
+{
   readonly [ComparisonTypeId] = ComparisonTypeId
 }
 

@@ -3,10 +3,12 @@ import { Result, Schema } from 'effect'
 import { SupervisionDecision } from './interpret-supervision-event.workflow.js'
 import { evolved, SupervisorState } from './SupervisorState.schema.js'
 
-export class SupervisionEvolution extends Schema.TaggedClass<SupervisionEvolution>()('SupervisionEvolution', {
-  state: SupervisorState,
-  decision: SupervisionDecision,
-}) {
+export class SupervisionEvolution
+  extends Schema.TaggedClass<SupervisionEvolution, { readonly brand: unique symbol }>()('SupervisionEvolution', {
+    state: SupervisorState,
+    decision: SupervisionDecision,
+  })
+{
   static readonly [Workflow.InstrumentationBrand] = {} as const
 }
 
