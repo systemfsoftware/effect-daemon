@@ -107,6 +107,7 @@ overrides:
   "@effect/opentelemetry": "catalog:"
   "@effect/platform-node": "catalog:"
   "@effect/platform-node-shared": "catalog:"
+  "@effect/tsgo": "catalog:"
   fast-check: "catalog:"
   vite: "catalog:"
   # storybook's csf-plugin resolves esbuild 0.27 in its peer context while tsx
