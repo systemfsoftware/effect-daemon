@@ -6,4 +6,4 @@
 "@systemfsoftware/effect-daemon-spec": major
 ---
 
-Requires Effect 4.1.0 or later.
+Requires Effect 4.1.2 or later.
