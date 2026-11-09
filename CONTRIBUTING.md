@@ -7,6 +7,9 @@
 - Node.js 24
 - pnpm (the version pinned in `package.json`'s `packageManager`)
 
+The dev shell (`nix develop`, or direnv) puts every tool on PATH, `bin/dprint` included; on a bare
+shell that has nix the wrapper scripts resolve what they need themselves.
+
 ## Dependencies on core
 
 Core packages are not installed from a registry. `flake.nix` pins core at a full commit (input `core`), and
@@ -16,8 +19,9 @@ Core packages are not installed from a registry. `flake.nix` pins core at a full
 To take newer core packages:
 
 1. Bump the `core` input.
-2. Update the override versions.
-3. Rebuild `.sfs-deps`.
+2. Rebuild `.sfs-deps` (the tarballs' names carry their versions, so this is what tells you the
+   new versions).
+3. Point `pnpm-workspace.yaml`'s overrides at those new `<name>-<version>.tgz` names.
 4. Run `pnpm install`.
 
 Other external dependencies come from the configured npm registry.
