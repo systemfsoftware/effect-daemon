@@ -16,6 +16,6 @@ concurrency:
 jobs:
   nix:
     name: nix
-    uses: systemfsoftware/systemfsoftware/.github/workflows/reusable-nix.yml@21dfc32e9927c87a31a37d19e5643445a4e398c3
+    uses: systemfsoftware/systemfsoftware/.github/workflows/reusable-nix.yml@b146694efe1139948c03bd9e9e366c725252c0d1
     with:
       systems: '[{"system": "x86_64-linux", "runner": "ubuntu-latest"}]'

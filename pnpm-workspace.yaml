@@ -78,31 +78,38 @@ minimumReleaseAgeExclude:
   - "@effect/*"
   - "@systemfsoftware/*"
 overrides:
-  # Core packages come from the core flake's tarballs (flake.nix sfs-deps), never from a registry.
-  "@systemfsoftware/conformance-spec": file:.sfs-deps/conformance-spec-1.0.1.tgz
-  "@systemfsoftware/effect-cell-types": file:.sfs-deps/effect-cell-types-12.0.2.tgz
-  "@systemfsoftware/effect-gherkin-spec": file:.sfs-deps/effect-gherkin-spec-8.0.0.tgz
-  "@systemfsoftware/effect-readiness": file:.sfs-deps/effect-readiness-1.1.1.tgz
-  "@systemfsoftware/effect-schema-discovery": file:.sfs-deps/effect-schema-discovery-2.0.1.tgz
-  "@systemfsoftware/effect-schema-law": file:.sfs-deps/effect-schema-law-6.1.0.tgz
-  "@systemfsoftware/effect-schema-recursion-budget": file:.sfs-deps/effect-schema-recursion-budget-2.0.1.tgz
-  "@systemfsoftware/effect-schema-vite": file:.sfs-deps/effect-schema-vite-3.1.1.tgz
-  "@systemfsoftware/effect-sim-kernel": file:.sfs-deps/effect-sim-kernel-2.0.0.tgz
-  "@systemfsoftware/effect-spec-runtime": file:.sfs-deps/effect-spec-runtime-1.1.0.tgz
-  "@systemfsoftware/oxlint-config-cell-architecture": file:.sfs-deps/oxlint-config-cell-architecture-5.0.0.tgz
-  "@systemfsoftware/oxlint-config-dmmf": file:.sfs-deps/oxlint-config-dmmf-3.0.0.tgz
-  "@systemfsoftware/oxlint-config-recommended": file:.sfs-deps/oxlint-config-recommended-5.0.0.tgz
-  "@systemfsoftware/oxlint-config-rule-authoring": file:.sfs-deps/oxlint-config-rule-authoring-2.0.0.tgz
-  "@systemfsoftware/oxlint-plugin-cell-architecture": file:.sfs-deps/oxlint-plugin-cell-architecture-6.0.0.tgz
-  "@systemfsoftware/oxlint-plugin-dmmf-workflow": file:.sfs-deps/oxlint-plugin-dmmf-workflow-7.1.0.tgz
-  "@systemfsoftware/oxlint-plugin-effect-platform": file:.sfs-deps/oxlint-plugin-effect-platform-2.1.0.tgz
-  "@systemfsoftware/oxlint-plugin-effect-schema": file:.sfs-deps/oxlint-plugin-effect-schema-6.0.1.tgz
-  "@systemfsoftware/oxlint-plugin-test-discipline": file:.sfs-deps/oxlint-plugin-test-discipline-6.0.0.tgz
-  "@systemfsoftware/stryker-config": file:.sfs-deps/stryker-config-0.2.0.tgz
-  "@systemfsoftware/tsconfig": file:.sfs-deps/tsconfig-2.0.2.tgz
-  "@systemfsoftware/tsdown-config": file:.sfs-deps/tsdown-config-0.1.1.tgz
-  "@systemfsoftware/vitest": file:.sfs-deps/vitest-3.0.0.tgz
-  "@systemfsoftware/vitest-config": file:.sfs-deps/vitest-config-0.1.1.tgz
+  # Core packages are core's tarballs, taken whole through the flake (producer-tarballs); see AGENTS.md.
+  "@systemfsoftware/conformance-spec@*": file:.deps/conformance-spec.tgz
+  "@systemfsoftware/differential-spec@*": file:.deps/differential-spec.tgz
+  "@systemfsoftware/effect-atom@*": file:.deps/effect-atom.tgz
+  "@systemfsoftware/effect-atom-react@*": file:.deps/effect-atom-react.tgz
+  "@systemfsoftware/effect-cell-types@*": file:.deps/effect-cell-types.tgz
+  "@systemfsoftware/effect-gherkin-spec@*": file:.deps/effect-gherkin-spec.tgz
+  "@systemfsoftware/effect-readiness@*": file:.deps/effect-readiness.tgz
+  "@systemfsoftware/effect-schema-discovery@*": file:.deps/effect-schema-discovery.tgz
+  "@systemfsoftware/effect-schema-law@*": file:.deps/effect-schema-law.tgz
+  "@systemfsoftware/effect-schema-recursion-budget@*": file:.deps/effect-schema-recursion-budget.tgz
+  "@systemfsoftware/effect-schema-vite@*": file:.deps/effect-schema-vite.tgz
+  "@systemfsoftware/effect-sim-kernel@*": file:.deps/effect-sim-kernel.tgz
+  "@systemfsoftware/effect-spec-runtime@*": file:.deps/effect-spec-runtime.tgz
+  "@systemfsoftware/omp-typescript-discipline@*": file:.deps/omp-typescript-discipline.tgz
+  "@systemfsoftware/oxlint-config-cell-architecture@*": file:.deps/oxlint-config-cell-architecture.tgz
+  "@systemfsoftware/oxlint-config-dmmf@*": file:.deps/oxlint-config-dmmf.tgz
+  "@systemfsoftware/oxlint-config-recommended@*": file:.deps/oxlint-config-recommended.tgz
+  "@systemfsoftware/oxlint-config-rule-authoring@*": file:.deps/oxlint-config-rule-authoring.tgz
+  "@systemfsoftware/oxlint-plugin-cell-architecture@*": file:.deps/oxlint-plugin-cell-architecture.tgz
+  "@systemfsoftware/oxlint-plugin-dmmf-workflow@*": file:.deps/oxlint-plugin-dmmf-workflow.tgz
+  "@systemfsoftware/oxlint-plugin-effect-platform@*": file:.deps/oxlint-plugin-effect-platform.tgz
+  "@systemfsoftware/oxlint-plugin-effect-schema@*": file:.deps/oxlint-plugin-effect-schema.tgz
+  "@systemfsoftware/oxlint-plugin-test-discipline@*": file:.deps/oxlint-plugin-test-discipline.tgz
+  "@systemfsoftware/storybook-gherkin@*": file:.deps/storybook-gherkin.tgz
+  "@systemfsoftware/stryker-config@*": file:.deps/stryker-config.tgz
+  "@systemfsoftware/trace-spec@*": file:.deps/trace-spec.tgz
+  "@systemfsoftware/trace-taxonomy@*": file:.deps/trace-taxonomy.tgz
+  "@systemfsoftware/tsconfig@*": file:.deps/tsconfig.tgz
+  "@systemfsoftware/tsdown-config@*": file:.deps/tsdown-config.tgz
+  "@systemfsoftware/vitest@*": file:.deps/vitest.tgz
+  "@systemfsoftware/vitest-config@*": file:.deps/vitest-config.tgz
   "@effect/tsgo": "catalog:"
   fast-check: "catalog:"
   vite: "catalog:"

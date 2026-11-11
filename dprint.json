@@ -17,7 +17,7 @@
     ".turbo",
     "pnpm-lock.yaml",
     "**/etc/*.api.md",
-    ".sfs-deps/**",
+    ".deps/**",
     "**/snapshots/*.md"
   ],
   "plugins": [

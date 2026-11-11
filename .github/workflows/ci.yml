@@ -22,7 +22,7 @@ permissions:
 jobs:
   conflicts:
     name: no merge conflicts
-    uses: systemfsoftware/systemfsoftware/.github/workflows/conflict-check.yml@21dfc32e9927c87a31a37d19e5643445a4e398c3
+    uses: systemfsoftware/systemfsoftware/.github/workflows/conflict-check.yml@b146694efe1139948c03bd9e9e366c725252c0d1
     with:
       base_ref: ${{ github.event.pull_request.base.ref }}
       head_sha: ${{ github.event.pull_request.head.sha }}
@@ -32,7 +32,7 @@ jobs:
     permissions:
       contents: read
       actions: read
-    uses: systemfsoftware/systemfsoftware/.github/workflows/reusable-checks.yml@21dfc32e9927c87a31a37d19e5643445a4e398c3
+    uses: systemfsoftware/systemfsoftware/.github/workflows/reusable-checks.yml@b146694efe1139948c03bd9e9e366c725252c0d1
     with:
       profile: ${{ github.ref == 'refs/heads/main' && 'per-change' || 'local' }}
       record: test-timings-${{ github.ref == 'refs/heads/main' && 'per-change' || 'local' }}

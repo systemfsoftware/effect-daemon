@@ -5,9 +5,7 @@ and single-owner singletons are supervised with inferred death and eventual grou
 
 ## Installation
 
-```bash
-pnpm add @systemfsoftware/effect-daemon-cluster
-```
+This package is not on npm: take `@systemfsoftware/effect-daemon-cluster` from nix.systemfsoftware.com, the package registry for `@systemfsoftware` packages, through a flake input (see the repository README).
 
 ## Features
 

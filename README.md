@@ -12,14 +12,12 @@ Erlang/OTP-style supervision trees for Effect, and the media that run their chil
 
 ## Install
 
-```bash
-pnpm add @systemfsoftware/effect-daemon-spec effect
-```
+nix.systemfsoftware.com is the package registry for `@systemfsoftware` packages: producers push package tarballs there from `main`, consumers substitute them through flake inputs, and nothing goes to npm. Consume `@systemfsoftware/effect-daemon-spec` from that registry through a flake input, and install `effect` beside it.
 
 Add the medium package you supervise children with (`effect-daemon-process`, `effect-daemon-socket` or
 `effect-daemon-cluster`), and `effect-daemon-conformance` to prove a medium of your own.
 
-The npm registry lags this repository's sources: `@systemfsoftware/effect-daemon-cluster` is 1.0.0 on npm and 1.0.3 here; `@systemfsoftware/effect-daemon-conformance` is 1.0.0 on npm and 1.0.3 here; `@systemfsoftware/effect-daemon-process` is 1.0.0 on npm and 1.0.3 here; `@systemfsoftware/effect-daemon-socket` is 1.0.0 on npm and 1.0.3 here; `@systemfsoftware/effect-daemon-spec` is 6.0.0 on npm and 6.0.3 here. Each package's README describes its current source.
+Each package's README describes its current source, which nix.systemfsoftware.com serves from `main`.
 
 ## Usage
 

@@ -6,9 +6,7 @@ Every supervision decision is made by a pure fold over supervision events, and e
 
 ## Install
 
-```bash
-pnpm add @systemfsoftware/effect-daemon-spec effect
-```
+This package is not on npm: take `@systemfsoftware/effect-daemon-spec` from nix.systemfsoftware.com, the package registry for `@systemfsoftware` packages, through a flake input (see the repository README). Install `effect` beside it.
 
 > [!NOTE]
 > `effect` is a peer dependency: you bring your own.
