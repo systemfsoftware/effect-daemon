@@ -6,9 +6,7 @@ stopped by a graceful close with a forced destroy after the mode's window.
 
 ## Installation
 
-```bash
-pnpm add @systemfsoftware/effect-daemon-socket
-```
+This package is not on npm: take `@systemfsoftware/effect-daemon-socket` from nix.systemfsoftware.com, the package registry for `@systemfsoftware` packages, through a flake input (see the repository README).
 
 ## Features
 

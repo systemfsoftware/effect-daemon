@@ -16,5 +16,5 @@ temp/
 /deno.lock
 .timings/
 .sfs-tools/
-# Core tarballs, built by `nix build .#sfs-deps` (CI: the sfs-deps job); never committed
-.sfs-deps/
+# Producer tarballs, copied in by the dev shell from nix.systemfsoftware.com; never committed
+.deps/

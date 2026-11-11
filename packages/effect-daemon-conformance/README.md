@@ -6,9 +6,7 @@ against the fiber reference.
 
 ## Installation
 
-```bash
-pnpm add @systemfsoftware/effect-daemon-conformance
-```
+This package is not on npm: take `@systemfsoftware/effect-daemon-conformance` from nix.systemfsoftware.com, the package registry for `@systemfsoftware` packages, through a flake input (see the repository README).
 
 ## Features
 

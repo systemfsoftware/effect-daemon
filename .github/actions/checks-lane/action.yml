@@ -16,7 +16,7 @@ runs:
   using: composite
   steps:
     - if: inputs.lane == 'plan' || inputs.lane == 'timings'
-      uses: systemfsoftware/systemfsoftware/.github/actions/sfs-tools@21dfc32e9927c87a31a37d19e5643445a4e398c3
+      uses: systemfsoftware/systemfsoftware/.github/actions/sfs-tools@b146694efe1139948c03bd9e9e366c725252c0d1
       with:
         repository: systemfsoftware/systemfsoftware
         ref: 21dfc32e9927c87a31a37d19e5643445a4e398c3
@@ -28,7 +28,7 @@ runs:
       if: inputs.lane == 'affected'
       shell: bash -e {0}
       run: printf 'CI=true\nCONFORMANCE_PROFILE=local\nTURBO_LOG_ORDER=stream\n' >> "$GITHUB_ENV"
-    - uses: systemfsoftware/systemfsoftware/.github/actions/install-deps@21dfc32e9927c87a31a37d19e5643445a4e398c3
+    - uses: systemfsoftware/systemfsoftware/.github/actions/install-deps@b146694efe1139948c03bd9e9e366c725252c0d1
       if: inputs.lane == 'affected'
     - name: Turbo cache
       if: inputs.lane == 'affected'
@@ -70,7 +70,7 @@ runs:
       if: inputs.lane == 'static'
       shell: bash -e {0}
       run: printf 'CI=true\nOXLINT_FORMAT=github\nTSGO_FORMAT=github-actions\nTURBO_LOG_ORDER=stream\n' >> "$GITHUB_ENV"
-    - uses: systemfsoftware/systemfsoftware/.github/actions/install-deps@21dfc32e9927c87a31a37d19e5643445a4e398c3
+    - uses: systemfsoftware/systemfsoftware/.github/actions/install-deps@b146694efe1139948c03bd9e9e366c725252c0d1
       if: inputs.lane == 'static'
     - uses: cachix/install-nix-action@v31
       if: inputs.lane == 'static' || inputs.lane == 'docs'
@@ -96,7 +96,7 @@ runs:
       if: inputs.lane == 'test' && inputs.profile == 'local'
       shell: bash -e {0}
       run: printf 'CONFORMANCE_PROFILE=local\n' >> "$GITHUB_ENV"
-    - uses: systemfsoftware/systemfsoftware/.github/actions/install-deps@21dfc32e9927c87a31a37d19e5643445a4e398c3
+    - uses: systemfsoftware/systemfsoftware/.github/actions/install-deps@b146694efe1139948c03bd9e9e366c725252c0d1
       if: inputs.lane == 'test'
     - name: Turbo cache
       if: inputs.lane == 'test'

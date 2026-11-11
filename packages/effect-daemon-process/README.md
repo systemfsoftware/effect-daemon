@@ -6,9 +6,7 @@ signal reported as observed, and its shutdown mapped onto SIGTERM and SIGKILL.
 
 ## Installation
 
-```bash
-pnpm add @systemfsoftware/effect-daemon-process
-```
+This package is not on npm: take `@systemfsoftware/effect-daemon-process` from nix.systemfsoftware.com, the package registry for `@systemfsoftware` packages, through a flake input (see the repository README).
 
 ## Features
 
