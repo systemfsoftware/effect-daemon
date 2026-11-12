@@ -2,11 +2,33 @@
   "nodes": {
     "comment-checker": {
       "inputs": {
+        "nixpkgs": "nixpkgs",
+        "pnpm-release-management": "pnpm-release-management",
+        "rust-overlay": "rust-overlay_2"
+      },
+      "locked": {
+        "lastModified": 1794379792,
+        "narHash": "sha256-EYd70jOquVsDxzGqE7UBBv2uc2vrteC8Ssq9T8LtxV0=",
+        "owner": "systemfsoftware",
+        "repo": "comment-checker",
+        "rev": "b3d29d4fb389688e6fb022f98d100ce10b4981df",
+        "type": "github"
+      },
+      "original": {
+        "owner": "systemfsoftware",
+        "repo": "comment-checker",
+        "type": "github"
+      }
+    },
+    "comment-checker_10": {
+      "inputs": {
         "nixpkgs": [
-          "core",
+          "pnpm-release-management",
+          "comment-checker",
+          "pnpm-release-management",
           "nixpkgs"
         ],
-        "rust-overlay": "rust-overlay"
+        "rust-overlay": "rust-overlay_11"
       },
       "locked": {
         "lastModified": 1790884787,
@@ -26,11 +48,11 @@
       "inputs": {
         "nixpkgs": [
           "core",
-          "gritlint",
+          "comment-checker",
           "pnpm-release-management",
           "nixpkgs"
         ],
-        "rust-overlay": "rust-overlay_2"
+        "rust-overlay": "rust-overlay"
       },
       "locked": {
         "lastModified": 1790884787,
@@ -50,10 +72,11 @@
       "inputs": {
         "nixpkgs": [
           "core",
+          "gritlint",
           "pnpm-release-management",
           "nixpkgs"
         ],
-        "rust-overlay": "rust-overlay_4"
+        "rust-overlay": "rust-overlay_3"
       },
       "locked": {
         "lastModified": 1790884787,
@@ -72,18 +95,19 @@
     "comment-checker_4": {
       "inputs": {
         "nixpkgs": [
-          "effect-readiness",
           "core",
+          "pnpm-release-management",
           "nixpkgs"
         ],
-        "rust-overlay": "rust-overlay_5"
+        "pnpm-release-management": "pnpm-release-management_4",
+        "rust-overlay": "rust-overlay_6"
       },
       "locked": {
-        "lastModified": 1790884787,
-        "narHash": "sha256-XZz0bdSY5zjlRDme0dfC98oYcAf3WOpMCueoU39iXjY=",
+        "lastModified": 1792993992,
+        "narHash": "sha256-p6Gc/rxr4yD3pAxC9XpJD6c3lI017b9l6KBUBFNGPYc=",
         "owner": "systemfsoftware",
         "repo": "comment-checker",
-        "rev": "3bfedd853c1d6dca666e65e71e9f8a31d47db336",
+        "rev": "45e50465ef36ec0f096f37882e16a535ddf6520a",
         "type": "github"
       },
       "original": {
@@ -95,13 +119,13 @@
     "comment-checker_5": {
       "inputs": {
         "nixpkgs": [
-          "effect-readiness",
           "core",
-          "gritlint",
+          "pnpm-release-management",
+          "comment-checker",
           "pnpm-release-management",
           "nixpkgs"
         ],
-        "rust-overlay": "rust-overlay_6"
+        "rust-overlay": "rust-overlay_5"
       },
       "locked": {
         "lastModified": 1790884787,
@@ -122,6 +146,30 @@
         "nixpkgs": [
           "effect-readiness",
           "core",
+          "nixpkgs"
+        ],
+        "rust-overlay": "rust-overlay_7"
+      },
+      "locked": {
+        "lastModified": 1790884787,
+        "narHash": "sha256-XZz0bdSY5zjlRDme0dfC98oYcAf3WOpMCueoU39iXjY=",
+        "owner": "systemfsoftware",
+        "repo": "comment-checker",
+        "rev": "3bfedd853c1d6dca666e65e71e9f8a31d47db336",
+        "type": "github"
+      },
+      "original": {
+        "owner": "systemfsoftware",
+        "repo": "comment-checker",
+        "type": "github"
+      }
+    },
+    "comment-checker_7": {
+      "inputs": {
+        "nixpkgs": [
+          "effect-readiness",
+          "core",
+          "gritlint",
           "pnpm-release-management",
           "nixpkgs"
         ],
@@ -141,38 +189,15 @@
         "type": "github"
       }
     },
-    "comment-checker_7": {
-      "inputs": {
-        "nixpkgs": [
-          "pnpm-release-management",
-          "nixpkgs"
-        ],
-        "pnpm-release-management": "pnpm-release-management_6",
-        "rust-overlay": "rust-overlay_10"
-      },
-      "locked": {
-        "lastModified": 1792993992,
-        "narHash": "sha256-p6Gc/rxr4yD3pAxC9XpJD6c3lI017b9l6KBUBFNGPYc=",
-        "owner": "systemfsoftware",
-        "repo": "comment-checker",
-        "rev": "45e50465ef36ec0f096f37882e16a535ddf6520a",
-        "type": "github"
-      },
-      "original": {
-        "owner": "systemfsoftware",
-        "repo": "comment-checker",
-        "type": "github"
-      }
-    },
     "comment-checker_8": {
       "inputs": {
         "nixpkgs": [
-          "pnpm-release-management",
-          "comment-checker",
+          "effect-readiness",
+          "core",
           "pnpm-release-management",
           "nixpkgs"
         ],
-        "rust-overlay": "rust-overlay_9"
+        "rust-overlay": "rust-overlay_10"
       },
       "locked": {
         "lastModified": 1790884787,
@@ -188,34 +213,57 @@
         "type": "github"
       }
     },
+    "comment-checker_9": {
+      "inputs": {
+        "nixpkgs": [
+          "pnpm-release-management",
+          "nixpkgs"
+        ],
+        "pnpm-release-management": "pnpm-release-management_8",
+        "rust-overlay": "rust-overlay_12"
+      },
+      "locked": {
+        "lastModified": 1792993992,
+        "narHash": "sha256-p6Gc/rxr4yD3pAxC9XpJD6c3lI017b9l6KBUBFNGPYc=",
+        "owner": "systemfsoftware",
+        "repo": "comment-checker",
+        "rev": "45e50465ef36ec0f096f37882e16a535ddf6520a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "systemfsoftware",
+        "repo": "comment-checker",
+        "type": "github"
+      }
+    },
     "core": {
       "inputs": {
         "comment-checker": "comment-checker",
         "gritlint": "gritlint",
-        "nixpkgs": "nixpkgs_2",
-        "pnpm-release-management": "pnpm-release-management_2"
+        "nixpkgs": "nixpkgs_4",
+        "pnpm-release-management": "pnpm-release-management_3"
       },
       "locked": {
-        "lastModified": 1794376154,
-        "narHash": "sha256-t6PRgCCvfiN2iCJ3LZo2XB0zdQlWfQ4BrUwMLwsOdqg=",
+        "lastModified": 1794437393,
+        "narHash": "sha256-SLDfn+Saqz+H42LbGsKRG1QlIr6hLfoaJ6/lQcTVZAg=",
         "owner": "systemfsoftware",
         "repo": "systemfsoftware",
-        "rev": "e1c7a5f4655d1705de502ebe0de3c1fa87e35591",
+        "rev": "3ef6c21c36f19a539078b6817b495df3039cc163",
         "type": "github"
       },
       "original": {
         "owner": "systemfsoftware",
         "repo": "systemfsoftware",
-        "rev": "e1c7a5f4655d1705de502ebe0de3c1fa87e35591",
+        "rev": "3ef6c21c36f19a539078b6817b495df3039cc163",
         "type": "github"
       }
     },
     "core_2": {
       "inputs": {
-        "comment-checker": "comment-checker_4",
+        "comment-checker": "comment-checker_6",
         "gritlint": "gritlint_2",
-        "nixpkgs": "nixpkgs_4",
-        "pnpm-release-management": "pnpm-release-management_4"
+        "nixpkgs": "nixpkgs_7",
+        "pnpm-release-management": "pnpm-release-management_6"
       },
       "locked": {
         "lastModified": 1793264800,
@@ -296,16 +344,16 @@
     "gritlint": {
       "inputs": {
         "crane": "crane",
-        "nixpkgs": "nixpkgs",
-        "pnpm-release-management": "pnpm-release-management",
-        "rust-overlay": "rust-overlay_3"
+        "nixpkgs": "nixpkgs_3",
+        "pnpm-release-management": "pnpm-release-management_2",
+        "rust-overlay": "rust-overlay_4"
       },
       "locked": {
-        "lastModified": 1793751530,
-        "narHash": "sha256-Dr7sCVd61aYTWOUj9HvgLSXOdh9uVPtqP/1ApCL5y7I=",
+        "lastModified": 1794376123,
+        "narHash": "sha256-/4OIWay19mcLcyLf5edCNPRia7rcTzSXKtzwAVcmxp0=",
         "owner": "systemfsoftware",
         "repo": "gritlint",
-        "rev": "9574d3abd7619bd6111992f16ccf2469129bbd52",
+        "rev": "69523f15829b152ecc9528bbd30609169ca1fa5b",
         "type": "github"
       },
       "original": {
@@ -317,9 +365,9 @@
     "gritlint_2": {
       "inputs": {
         "crane": "crane_2",
-        "nixpkgs": "nixpkgs_3",
-        "pnpm-release-management": "pnpm-release-management_3",
-        "rust-overlay": "rust-overlay_7"
+        "nixpkgs": "nixpkgs_6",
+        "pnpm-release-management": "pnpm-release-management_5",
+        "rust-overlay": "rust-overlay_9"
       },
       "locked": {
         "lastModified": 1791922588,
@@ -339,7 +387,7 @@
       "inputs": {
         "nixpkgs": [
           "core",
-          "gritlint",
+          "comment-checker",
           "pnpm-release-management",
           "nixpkgs"
         ],
@@ -364,6 +412,7 @@
       "inputs": {
         "nixpkgs": [
           "core",
+          "gritlint",
           "pnpm-release-management",
           "nixpkgs"
         ],
@@ -387,9 +436,9 @@
     "importPnpmLock_3": {
       "inputs": {
         "nixpkgs": [
-          "effect-readiness",
           "core",
-          "gritlint",
+          "pnpm-release-management",
+          "comment-checker",
           "pnpm-release-management",
           "nixpkgs"
         ],
@@ -413,7 +462,6 @@
     "importPnpmLock_4": {
       "inputs": {
         "nixpkgs": [
-          "effect-readiness",
           "core",
           "pnpm-release-management",
           "nixpkgs"
@@ -438,8 +486,9 @@
     "importPnpmLock_5": {
       "inputs": {
         "nixpkgs": [
-          "pnpm-release-management",
-          "comment-checker",
+          "effect-readiness",
+          "core",
+          "gritlint",
           "pnpm-release-management",
           "nixpkgs"
         ],
@@ -463,6 +512,8 @@
     "importPnpmLock_6": {
       "inputs": {
         "nixpkgs": [
+          "effect-readiness",
+          "core",
           "pnpm-release-management",
           "nixpkgs"
         ],
@@ -483,29 +534,77 @@
         "type": "github"
       }
     },
+    "importPnpmLock_7": {
+      "inputs": {
+        "nixpkgs": [
+          "pnpm-release-management",
+          "comment-checker",
+          "pnpm-release-management",
+          "nixpkgs"
+        ],
+        "systems": "systems_7"
+      },
+      "locked": {
+        "lastModified": 1790096829,
+        "narHash": "sha256-mnjMXjY/fo5OQH/iYNPijIqo0jAb/z7EhHtfXLlzOrs=",
+        "owner": "Scrumplex",
+        "repo": "importPnpmLock.nix",
+        "rev": "ca18d47b0e98a4b51404f69ce5ab51efb6ebc151",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Scrumplex",
+        "repo": "importPnpmLock.nix",
+        "rev": "ca18d47b0e98a4b51404f69ce5ab51efb6ebc151",
+        "type": "github"
+      }
+    },
+    "importPnpmLock_8": {
+      "inputs": {
+        "nixpkgs": [
+          "pnpm-release-management",
+          "nixpkgs"
+        ],
+        "systems": "systems_8"
+      },
+      "locked": {
+        "lastModified": 1790096829,
+        "narHash": "sha256-mnjMXjY/fo5OQH/iYNPijIqo0jAb/z7EhHtfXLlzOrs=",
+        "owner": "Scrumplex",
+        "repo": "importPnpmLock.nix",
+        "rev": "ca18d47b0e98a4b51404f69ce5ab51efb6ebc151",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Scrumplex",
+        "repo": "importPnpmLock.nix",
+        "rev": "ca18d47b0e98a4b51404f69ce5ab51efb6ebc151",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1791191277,
-        "narHash": "sha256-i8KuaINOYLvB2oQikGvtRmdZRxATRxsI9Yad2pp7dEA=",
+        "lastModified": 1790652569,
+        "narHash": "sha256-641r7xrlSOHYoktL9/aArPIYNgZJ9eM5URzSEOtPJDY=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "aa48d347080940b8a2b8d2f48228674e280a3514",
+        "rev": "b6c8664de9b6cc07fe5666a29f91884ba81197c4",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
-        "ref": "nixos-unstable",
+        "ref": "nixpkgs-unstable",
         "repo": "nixpkgs",
         "type": "github"
       }
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1793726008,
-        "narHash": "sha256-jQp1wKvbwWdLBASTXkSi/VYmDJ5AbBi1WvcMt9HWJC8=",
+        "lastModified": 1791191277,
+        "narHash": "sha256-i8KuaINOYLvB2oQikGvtRmdZRxATRxsI9Yad2pp7dEA=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "1d060086d60cb76a40cf37109f979d88a5bd6396",
+        "rev": "aa48d347080940b8a2b8d2f48228674e280a3514",
         "type": "github"
       },
       "original": {
@@ -533,11 +632,11 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1791956154,
-        "narHash": "sha256-jBYGPi4udQ9uo4KQp9m2J0546nJVQitG15gvZSaVVAs=",
+        "lastModified": 1793726008,
+        "narHash": "sha256-jQp1wKvbwWdLBASTXkSi/VYmDJ5AbBi1WvcMt9HWJC8=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "55bfb4d7437bd4e09ab7cba58a43bd68eb310044",
+        "rev": "1d060086d60cb76a40cf37109f979d88a5bd6396",
         "type": "github"
       },
       "original": {
@@ -579,28 +678,71 @@
         "type": "github"
       }
     },
+    "nixpkgs_7": {
+      "locked": {
+        "lastModified": 1791956154,
+        "narHash": "sha256-jBYGPi4udQ9uo4KQp9m2J0546nJVQitG15gvZSaVVAs=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "55bfb4d7437bd4e09ab7cba58a43bd68eb310044",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_8": {
+      "locked": {
+        "lastModified": 1793110635,
+        "narHash": "sha256-dhoW6VgFWlaodSY5jrBn+CF2FLmaUvDVgM7+C7T2+NM=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "31ecbaca1bdefa45dffc409f0250bd8039ea0010",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_9": {
+      "locked": {
+        "lastModified": 1791191277,
+        "narHash": "sha256-i8KuaINOYLvB2oQikGvtRmdZRxATRxsI9Yad2pp7dEA=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "aa48d347080940b8a2b8d2f48228674e280a3514",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "pnpm-release-management": {
       "inputs": {
         "comment-checker": "comment-checker_2",
         "importPnpmLock": "importPnpmLock",
-        "nixpkgs": [
-          "core",
-          "gritlint",
-          "nixpkgs"
-        ]
+        "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1791596974,
-        "narHash": "sha256-fE5LJdLoFR/aTaKhWCf3Xzgn0fx19AYQB2uEVVr25wM=",
+        "lastModified": 1791502173,
+        "narHash": "sha256-CG3v+ncF9PDDhiDd49u8OZXJw+i7UZHzKXOmFZr3alc=",
         "owner": "systemfsoftware",
         "repo": "pnpm-release-management",
-        "rev": "b9b4a1d48cc16241b33f9afd8ab99b82b05ce04f",
+        "rev": "fbf617135160fbde74c64835d21dd918d13538d7",
         "type": "github"
       },
       "original": {
         "owner": "systemfsoftware",
         "repo": "pnpm-release-management",
-        "rev": "b9b4a1d48cc16241b33f9afd8ab99b82b05ce04f",
         "type": "github"
       }
     },
@@ -610,28 +752,73 @@
         "importPnpmLock": "importPnpmLock_2",
         "nixpkgs": [
           "core",
+          "gritlint",
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1791510278,
-        "narHash": "sha256-UXWg+FzruRo4IyLB8iYjOu4+sODj5N3cE03+VILreGs=",
+        "lastModified": 1791596974,
+        "narHash": "sha256-fE5LJdLoFR/aTaKhWCf3Xzgn0fx19AYQB2uEVVr25wM=",
         "owner": "systemfsoftware",
         "repo": "pnpm-release-management",
-        "rev": "8cd6e83009531de040cd9c03e1370b4966fd2a12",
+        "rev": "b9b4a1d48cc16241b33f9afd8ab99b82b05ce04f",
         "type": "github"
       },
       "original": {
         "owner": "systemfsoftware",
         "repo": "pnpm-release-management",
-        "rev": "8cd6e83009531de040cd9c03e1370b4966fd2a12",
+        "rev": "b9b4a1d48cc16241b33f9afd8ab99b82b05ce04f",
         "type": "github"
       }
     },
     "pnpm-release-management_3": {
       "inputs": {
+        "comment-checker": "comment-checker_4",
+        "importPnpmLock": "importPnpmLock_4",
+        "nixpkgs": [
+          "core",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1794413271,
+        "narHash": "sha256-5XOB3VCYNhok3ecmUN6zrQQQ7K1Bcv3lv6P+nL/HfSY=",
+        "owner": "systemfsoftware",
+        "repo": "pnpm-release-management",
+        "rev": "7c976f10f0233a671caa340c5b20f9c2acaab433",
+        "type": "github"
+      },
+      "original": {
+        "owner": "systemfsoftware",
+        "repo": "pnpm-release-management",
+        "rev": "7c976f10f0233a671caa340c5b20f9c2acaab433",
+        "type": "github"
+      }
+    },
+    "pnpm-release-management_4": {
+      "inputs": {
         "comment-checker": "comment-checker_5",
         "importPnpmLock": "importPnpmLock_3",
+        "nixpkgs": "nixpkgs_5"
+      },
+      "locked": {
+        "lastModified": 1791502173,
+        "narHash": "sha256-CG3v+ncF9PDDhiDd49u8OZXJw+i7UZHzKXOmFZr3alc=",
+        "owner": "systemfsoftware",
+        "repo": "pnpm-release-management",
+        "rev": "fbf617135160fbde74c64835d21dd918d13538d7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "systemfsoftware",
+        "repo": "pnpm-release-management",
+        "type": "github"
+      }
+    },
+    "pnpm-release-management_5": {
+      "inputs": {
+        "comment-checker": "comment-checker_7",
+        "importPnpmLock": "importPnpmLock_5",
         "nixpkgs": [
           "effect-readiness",
           "core",
@@ -654,10 +841,10 @@
         "type": "github"
       }
     },
-    "pnpm-release-management_4": {
+    "pnpm-release-management_6": {
       "inputs": {
-        "comment-checker": "comment-checker_6",
-        "importPnpmLock": "importPnpmLock_4",
+        "comment-checker": "comment-checker_8",
+        "importPnpmLock": "importPnpmLock_6",
         "nixpkgs": [
           "effect-readiness",
           "core",
@@ -679,11 +866,11 @@
         "type": "github"
       }
     },
-    "pnpm-release-management_5": {
+    "pnpm-release-management_7": {
       "inputs": {
-        "comment-checker": "comment-checker_7",
-        "importPnpmLock": "importPnpmLock_6",
-        "nixpkgs": "nixpkgs_6"
+        "comment-checker": "comment-checker_9",
+        "importPnpmLock": "importPnpmLock_8",
+        "nixpkgs": "nixpkgs_9"
       },
       "locked": {
         "lastModified": 1794376198,
@@ -699,11 +886,11 @@
         "type": "github"
       }
     },
-    "pnpm-release-management_6": {
+    "pnpm-release-management_8": {
       "inputs": {
-        "comment-checker": "comment-checker_8",
-        "importPnpmLock": "importPnpmLock_5",
-        "nixpkgs": "nixpkgs_5"
+        "comment-checker": "comment-checker_10",
+        "importPnpmLock": "importPnpmLock_7",
+        "nixpkgs": "nixpkgs_8"
       },
       "locked": {
         "lastModified": 1791502173,
@@ -727,13 +914,15 @@
           "core",
           "nixpkgs"
         ],
-        "pnpm-release-management": "pnpm-release-management_5"
+        "pnpm-release-management": "pnpm-release-management_7"
       }
     },
     "rust-overlay": {
       "inputs": {
         "nixpkgs": [
           "core",
+          "comment-checker",
+          "pnpm-release-management",
           "comment-checker",
           "nixpkgs"
         ]
@@ -753,6 +942,54 @@
       }
     },
     "rust-overlay_10": {
+      "inputs": {
+        "nixpkgs": [
+          "effect-readiness",
+          "core",
+          "pnpm-release-management",
+          "comment-checker",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1790756160,
+        "narHash": "sha256-NPs4nNLxCpho3Ctj8O7t/bzmX0zR8r0zndKghAFEz5U=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "ed3a19fd0439ed618ec5fe1e12f0ba69a8be38b5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "rust-overlay_11": {
+      "inputs": {
+        "nixpkgs": [
+          "pnpm-release-management",
+          "comment-checker",
+          "pnpm-release-management",
+          "comment-checker",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1790756160,
+        "narHash": "sha256-NPs4nNLxCpho3Ctj8O7t/bzmX0zR8r0zndKghAFEz5U=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "ed3a19fd0439ed618ec5fe1e12f0ba69a8be38b5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "rust-overlay_12": {
       "inputs": {
         "nixpkgs": [
           "pnpm-release-management",
@@ -778,8 +1015,6 @@
       "inputs": {
         "nixpkgs": [
           "core",
-          "gritlint",
-          "pnpm-release-management",
           "comment-checker",
           "nixpkgs"
         ]
@@ -803,27 +1038,6 @@
         "nixpkgs": [
           "core",
           "gritlint",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1790928989,
-        "narHash": "sha256-5r3MN/Rx7N9tLapCBmUq6/zCc3C9J7gNif1HybD1fJQ=",
-        "owner": "oxalica",
-        "repo": "rust-overlay",
-        "rev": "368fee9beaab04ca6fe7af28db63caa9badb22fa",
-        "type": "github"
-      },
-      "original": {
-        "owner": "oxalica",
-        "repo": "rust-overlay",
-        "type": "github"
-      }
-    },
-    "rust-overlay_4": {
-      "inputs": {
-        "nixpkgs": [
-          "core",
           "pnpm-release-management",
           "comment-checker",
           "nixpkgs"
@@ -843,11 +1057,35 @@
         "type": "github"
       }
     },
+    "rust-overlay_4": {
+      "inputs": {
+        "nixpkgs": [
+          "core",
+          "gritlint",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1790928989,
+        "narHash": "sha256-5r3MN/Rx7N9tLapCBmUq6/zCc3C9J7gNif1HybD1fJQ=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "368fee9beaab04ca6fe7af28db63caa9badb22fa",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
     "rust-overlay_5": {
       "inputs": {
         "nixpkgs": [
-          "effect-readiness",
           "core",
+          "pnpm-release-management",
+          "comment-checker",
+          "pnpm-release-management",
           "comment-checker",
           "nixpkgs"
         ]
@@ -869,9 +1107,7 @@
     "rust-overlay_6": {
       "inputs": {
         "nixpkgs": [
-          "effect-readiness",
           "core",
-          "gritlint",
           "pnpm-release-management",
           "comment-checker",
           "nixpkgs"
@@ -896,16 +1132,16 @@
         "nixpkgs": [
           "effect-readiness",
           "core",
-          "gritlint",
+          "comment-checker",
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1790928989,
-        "narHash": "sha256-5r3MN/Rx7N9tLapCBmUq6/zCc3C9J7gNif1HybD1fJQ=",
+        "lastModified": 1790756160,
+        "narHash": "sha256-NPs4nNLxCpho3Ctj8O7t/bzmX0zR8r0zndKghAFEz5U=",
         "owner": "oxalica",
         "repo": "rust-overlay",
-        "rev": "368fee9beaab04ca6fe7af28db63caa9badb22fa",
+        "rev": "ed3a19fd0439ed618ec5fe1e12f0ba69a8be38b5",
         "type": "github"
       },
       "original": {
@@ -919,6 +1155,7 @@
         "nixpkgs": [
           "effect-readiness",
           "core",
+          "gritlint",
           "pnpm-release-management",
           "comment-checker",
           "nixpkgs"
@@ -941,19 +1178,18 @@
     "rust-overlay_9": {
       "inputs": {
         "nixpkgs": [
-          "pnpm-release-management",
-          "comment-checker",
-          "pnpm-release-management",
-          "comment-checker",
+          "effect-readiness",
+          "core",
+          "gritlint",
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1790756160,
-        "narHash": "sha256-NPs4nNLxCpho3Ctj8O7t/bzmX0zR8r0zndKghAFEz5U=",
+        "lastModified": 1790928989,
+        "narHash": "sha256-5r3MN/Rx7N9tLapCBmUq6/zCc3C9J7gNif1HybD1fJQ=",
         "owner": "oxalica",
         "repo": "rust-overlay",
-        "rev": "ed3a19fd0439ed618ec5fe1e12f0ba69a8be38b5",
+        "rev": "368fee9beaab04ca6fe7af28db63caa9badb22fa",
         "type": "github"
       },
       "original": {
@@ -1038,6 +1274,36 @@
       }
     },
     "systems_6": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "systems_7": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "systems_8": {
       "locked": {
         "lastModified": 1681028828,
         "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",

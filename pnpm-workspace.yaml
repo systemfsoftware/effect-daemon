@@ -72,7 +72,7 @@ catalogs:
     "@systemfsoftware/stryker-js-typescript-checker": latest
     "@systemfsoftware/stryker-js-vitest-runner": latest
     "mutation-testing-elements": 3.9.0
-minimumReleaseAge: 1440
+minimumReleaseAge: 4320
 minimumReleaseAgeExclude:
   - effect
   - "@effect/*"
@@ -119,8 +119,6 @@ overrides:
   esbuild: ^0.28.2
 packages:
   - packages/*
-patchedDependencies:
-  rolldown-plugin-dts@0.28.6: patches/rolldown-plugin-dts@0.28.6.patch
 supportedArchitectures:
   os: [linux]
   cpu: [x64, arm64]
