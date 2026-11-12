@@ -10,7 +10,7 @@
   inputs = {
     # Core at a full commit. Core is public, so no fetch token is needed. Moving this pin is how the
     # repository takes newer core packages: bump it, then run `nix flake lock` and refresh the overrides.
-    core.url = "github:systemfsoftware/systemfsoftware/e1c7a5f4655d1705de502ebe0de3c1fa87e35591";
+    core.url = "github:systemfsoftware/systemfsoftware/3ef6c21c36f19a539078b6817b495df3039cc163";
     nixpkgs.follows = "core/nixpkgs";
     pnpm-release-management.url = "github:systemfsoftware/pnpm-release-management";
     # Second producer: core no longer ships effect-readiness, so it comes from its own repository, pinned at a full commit.
