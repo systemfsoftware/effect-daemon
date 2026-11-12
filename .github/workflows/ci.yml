@@ -8,8 +8,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
-  merge_group:
   workflow_dispatch:
 # Every commit on main gets its own run and verdict; on any other ref a newer push cancels the superseded run.
 concurrency:
