@@ -6,7 +6,7 @@
 
 // @public (undocumented)
 export namespace ClusterMedium {
-    export { ClusterMediumOptions, ClusterMediumPort, ClusterMediumRequirement, ClusterProgram, ClusterProgramRequirements, EntityChild, EntityChildOptions, SingletonChild, SingletonChildOptions, conformanceDriver, declaration, entityChild, layer, mediumFor, port, singletonChild };
+    export { ClusterMediumOptions, ClusterMediumPort, ClusterMediumRequirement, ClusterProgram, ClusterProgramRequirements, EntityChild, EntityChildOptions, RunnerSessionsUnnamed, SingletonChild, SingletonChildOptions, SqlRunnerOptions, SqlRunnerSettings, conformanceDriver, declaration, entityChild, layer, mediumFor, port, singletonChild, sqlRunnerLayer };
 }
 
 // (No @packageDocumentation comment for this package)
