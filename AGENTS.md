@@ -48,3 +48,10 @@ nix develop --accept-flake-config --command pnpm install
 - Run `pnpm --filter <pkg> <cmd>` from the root; never `cd` into packages, never `npx`.
 - Commits: `type(scope): subject` (commitlint).
 - Tooling scripts are TypeScript run by the toolchain already in the workspace; no synchronous IO in new scripts.
+
+## Routing
+
+| Doc                                 | Trigger                                                                                                                                         |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CONSTITUTION.md`                   | architecture changes, rule authoring, or design disputes                                                                                        |
+| `repos/constitution/ENFORCEMENT.md` | building or changing an instrument that grades work (lint gates, stream rules, CI checks, thresholds, rubrics, advisors); situational read only |
