@@ -14,7 +14,7 @@
     nixpkgs.follows = "core/nixpkgs";
     pnpm-release-management.url = "github:systemfsoftware/pnpm-release-management";
     # Second producer: core no longer ships effect-readiness, so it comes from its own repository, pinned at a full commit.
-    effect-readiness.url = "github:systemfsoftware/effect-readiness/ae821eaf5484d1e8dac9e2fa4019d1563092d958";
+    effect-readiness.url = "github:systemfsoftware/effect-readiness/778548d74f6e679c86ae03dbb05b484435ce0775";
   };
 
   outputs = { self, nixpkgs, core, pnpm-release-management, effect-readiness }:
