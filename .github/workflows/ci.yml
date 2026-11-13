@@ -19,5 +19,9 @@ jobs:
     with:
       commitlint: true
       changeset: false
-      fast: pnpm check:static
+      fast: |
+        s=0; ./bin/dprint check || s=1
+        export TURBO_SCM_BASE="$BASE" TURBO_SCM_HEAD="$HEAD"
+        pnpm exec turbo run --concurrency=${TURBO_CONCURRENCY:-50%} --continue build lint typecheck test:types api:check attw --affected || s=1
+        exit $s
       full: pnpm check:ci
