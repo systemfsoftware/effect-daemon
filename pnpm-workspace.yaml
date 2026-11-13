@@ -18,6 +18,8 @@ catalog:
   "@effect/platform-node-shared": 4.1.2
   effect: 4.1.2
   "@effect/sql-pglite": 4.1.2
+  "@effect/sql-pg": 4.1.2
+  testcontainers: ^12.2.1
   "@effect/tsgo": 0.64.1
   "@effect/opentelemetry": 4.1.2
   "@opentelemetry/sdk-trace-base": ^2.12.0

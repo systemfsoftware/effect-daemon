@@ -1,6 +1,6 @@
 import { Supervisor } from '@systemfsoftware/effect-daemon-spec'
-import { Deferred, Duration, Effect, Exit, Layer, Match, Option, Result, Scope } from 'effect'
-import { Sharding } from 'effect/cluster'
+import { Cause, Deferred, Duration, Effect, Exit, Layer, Match, Option, Ref, Result, Scope } from 'effect'
+import { EntityId, Sharding } from 'effect/cluster'
 import { absurd } from 'effect/Function'
 import type { ClusterProgram, ClusterProgramRequirements, EntityChild, SingletonChild } from './ClusterProgram.js'
 
@@ -19,20 +19,23 @@ type ClusterStartedTypeId = typeof ClusterStartedTypeId
 interface ClusterStarted extends Supervisor.Medium.Started {
   readonly [ClusterStartedTypeId]: ClusterStartedTypeId
   readonly registration: Scope.Closeable
-  readonly ended: Deferred.Deferred<Exit.Exit<void, never>>
+  readonly ended: Deferred.Deferred<Supervisor.Medium.TerminationReason>
+  readonly stopping: Ref.Ref<boolean>
   readonly probe: Effect.Effect<boolean, never, ClusterMediumRequirement>
 }
 
 const clusterStarted = (
   ready: Effect.Effect<void>,
   registration: Scope.Closeable,
-  ended: Deferred.Deferred<Exit.Exit<void, never>>,
+  ended: Deferred.Deferred<Supervisor.Medium.TerminationReason>,
+  stopping: Ref.Ref<boolean>,
   probe: Effect.Effect<boolean, never, ClusterMediumRequirement>,
 ): ClusterStarted => ({
   ...Supervisor.Medium.started(ready),
   [ClusterStartedTypeId]: ClusterStartedTypeId,
   registration,
   ended,
+  stopping,
   probe,
 })
 
@@ -48,10 +51,9 @@ const inferredDeath: Supervisor.Medium.TerminationReason = {
   _tag: 'Abnormal',
   report: { _tag: 'InferredReport', failedProbes: 1 },
 }
-
-const terminationOf = (exit: Exit.Exit<void, never>): Supervisor.Medium.TerminationReason =>
+const terminationOf = (stopping: boolean, exit: Exit.Exit<void, never>): Supervisor.Medium.TerminationReason =>
   Match.value(
-    Result.match(Supervisor.classifyChildExit(new Supervisor.ClassifyChildExit({ stopping: false, exit })), {
+    Result.match(Supervisor.classifyChildExit(new Supervisor.ClassifyChildExit({ stopping, exit })), {
       onFailure: (error: never): never => absurd(error),
       onSuccess: (decision) => decision,
     }),
@@ -62,6 +64,26 @@ const terminationOf = (exit: Exit.Exit<void, never>): Supervisor.Medium.Terminat
     Match.exhaustive,
   )
 
+const lostItsShard = (stopping: boolean, exit: Exit.Exit<void, never>): boolean =>
+  !stopping && Exit.match(exit, { onSuccess: () => false, onFailure: Cause.hasInterruptsOnly })
+
+const reportedOnExit = (
+  ended: Deferred.Deferred<Supervisor.Medium.TerminationReason>,
+  stopping: Ref.Ref<boolean>,
+) =>
+(exit: Exit.Exit<void, never>): Effect.Effect<void> =>
+  Effect.flatMap(
+    Ref.get(stopping),
+    (stopped) =>
+      lostItsShard(stopped, exit) ? Effect.void : Effect.asVoid(Deferred.succeed(ended, terminationOf(stopped, exit))),
+  )
+
+const ownsSingleton = (sharding: Sharding.Sharding['Service'], name: string, shardGroup: string | undefined) =>
+  sharding.hasShardId(sharding.getShardId(EntityId.make(name), shardGroup ?? 'default'))
+
+const readyWhen = (owned: boolean, signalled: Deferred.Deferred<void>): Effect.Effect<void> =>
+  owned ? Deferred.await(signalled) : Effect.void
+
 const startSingleton = (
   program: SingletonChild<ClusterMediumRequirement>,
   shardGroup: string | undefined,
@@ -70,16 +92,18 @@ const startSingleton = (
     const evidenceScope = yield* Effect.scope
     const registration = yield* Scope.fork(evidenceScope)
     const signalled = yield* Deferred.make<void>()
-    const ended = yield* Deferred.make<Exit.Exit<void, never>>()
+    const ended = yield* Deferred.make<Supervisor.Medium.TerminationReason>()
+    const stopping = yield* Ref.make(false)
     const sharding = yield* Sharding.Sharding
     const run = program.run(Deferred.succeed(signalled, void 0)).pipe(
-      Effect.onExit((exit) => Effect.asVoid(Deferred.succeed(ended, exit))),
+      Effect.onExit(reportedOnExit(ended, stopping)),
     )
     yield* sharding.registerSingleton(program.name, run, { shardGroup }).pipe(
       Effect.provideService(Scope.Scope, registration),
     )
+    const ready = readyWhen(ownsSingleton(sharding, program.name, shardGroup), signalled)
     const probe = Deferred.isDone(ended).pipe(Effect.map((done) => done === false))
-    return clusterStarted(Deferred.await(signalled), registration, ended, probe)
+    return clusterStarted(ready, registration, ended, stopping, probe)
   })
 
 const startEntity = (
@@ -89,12 +113,13 @@ const startEntity = (
     const evidenceScope = yield* Effect.scope
     const registration = yield* Scope.fork(evidenceScope)
     const signalled = yield* Deferred.make<void>()
-    const ended = yield* Deferred.make<Exit.Exit<void, never>>()
+    const ended = yield* Deferred.make<Supervisor.Medium.TerminationReason>()
+    const stopping = yield* Ref.make(false)
     const watch = Effect.gen(function*() {
       const exit = yield* Effect.exit(program.register.pipe(Effect.provideService(Scope.Scope, registration)))
       yield* Exit.match(exit, {
         onSuccess: () => Effect.asVoid(Deferred.succeed(signalled, void 0)),
-        onFailure: () => Effect.asVoid(Deferred.succeed(ended, exit)),
+        onFailure: () => reportedOnExit(ended, stopping)(exit),
       })
       return yield* Effect.never
     })
@@ -103,7 +128,7 @@ const startEntity = (
       Effect.timeoutOption(Duration.millis(LIVENESS_PROBE_MILLIS)),
       Effect.map((answered) => Option.getOrElse(answered, () => false)),
     )
-    return clusterStarted(Deferred.await(signalled), registration, ended, probe)
+    return clusterStarted(Deferred.await(signalled), registration, ended, stopping, probe)
   })
 
 const startOf = (
@@ -119,7 +144,7 @@ const startOf = (
 const reportOf = (evidence: Supervisor.Medium.Started) =>
   Option.match(clusterOf(evidence), {
     onNone: () => Effect.succeed(shutdownTermination),
-    onSome: (self) => Deferred.await(self.ended).pipe(Effect.map(terminationOf)),
+    onSome: (self) => Deferred.await(self.ended),
   })
 
 const probeOf = (
@@ -135,7 +160,12 @@ const stopOf = (
 ): Effect.Effect<Supervisor.Medium.Stopped, never, ClusterMediumRequirement> =>
   Option.match(clusterOf(evidence), {
     onNone: () => Effect.succeed(Supervisor.Medium.stopped),
-    onSome: (self) => Effect.as(Scope.close(self.registration, Exit.void), Supervisor.Medium.stopped),
+    onSome: (self) =>
+      Ref.set(self.stopping, true).pipe(
+        Effect.andThen(Scope.close(self.registration, Exit.void)),
+        Effect.andThen(Deferred.succeed(self.ended, shutdownTermination)),
+        Effect.as(Supervisor.Medium.stopped),
+      ),
   })
 
 export interface ClusterMediumOptions {
