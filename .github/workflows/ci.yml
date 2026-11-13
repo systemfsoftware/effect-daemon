@@ -1,45 +1,23 @@
 name: CI
 
-# Fast checks on the pull request, the full suite in the merge queue. A pull request runs the static lane, the
-# `affected` lane (.github/ci/pr-tests.mjs) and no packed test job (.github/ci/no-tests-before-merge.mjs). A Mergify
-# queue draft (head `mergify/merge-queue/*`) and main run the static lane and every package's whole suite in the packed
-# test jobs. Mergify builds its drafts as pull requests, so there is no merge_group trigger.
+# One job per pull request. A pull request runs `pnpm check:static`; a Mergify queue draft (head ref
+# `mergify/merge-queue/*`) and a push to main run `pnpm check:ci`, the static checks plus the whole test suite.
+# Mergify builds its drafts as pull requests, so there is no merge_group trigger. The squash-message lint
+# and the change-intent check are steps of the same job. A newer push to a pull request cancels its older run.
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
-# Every commit on main gets its own run and verdict; on any other ref a newer push cancels the superseded run.
-concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
 
 jobs:
-  conflicts:
-    name: no merge conflicts
-    uses: systemfsoftware/systemfsoftware/.github/workflows/conflict-check.yml@b146694efe1139948c03bd9e9e366c725252c0d1
-    with:
-      base_ref: ${{ github.event.pull_request.base.ref }}
-      head_sha: ${{ github.event.pull_request.head.sha }}
   checks:
-    name: build · lint · typecheck · test
-    needs: conflicts
-    permissions:
-      contents: read
-      actions: read
-    uses: systemfsoftware/systemfsoftware/.github/workflows/reusable-checks.yml@b146694efe1139948c03bd9e9e366c725252c0d1
+    uses: systemfsoftware/systemfsoftware/.github/workflows/reusable-ci.yml@f271b208fd10c56d27380de6bc43f54b9c7ee2a5
     with:
-      profile: ${{ (github.ref == 'refs/heads/main' || startsWith(github.head_ref, 'mergify/merge-queue/')) && 'per-change' || 'local' }}
-      record: test-timings-${{ (github.ref == 'refs/heads/main' || startsWith(github.head_ref, 'mergify/merge-queue/')) && 'per-change' || 'local' }}
-      timings: ${{ (github.ref == 'refs/heads/main' || startsWith(github.head_ref, 'mergify/merge-queue/')) && 'test-timings' || 'node .github/ci/no-tests-before-merge.mjs' }}
-      node-options: --max-old-space-size=4096
-      pnpm: corepack pnpm
-      test-flags: --output-logs=new-only --log-order=stream --log-prefix=none
-      gate-name: the gate (pnpm check:ci)
-      lanes: >-
-        ${{ (github.ref == 'refs/heads/main' || startsWith(github.head_ref, 'mergify/merge-queue/'))
-        && '[{"id": "static", "name": "static checks (pnpm check:static)", "timeout-minutes": 45, "node-options": "--max-old-space-size=4096", "run": "corepack pnpm check:static", "docs-run": "./bin/dprint check"}]'
-        || '[{"id": "static", "name": "static checks (pnpm check:static)", "timeout-minutes": 45, "node-options": "--max-old-space-size=4096", "run": "corepack pnpm check:static", "docs-run": "./bin/dprint check"}, {"id": "affected", "name": "affected tests (turbo --affected, vitest --changed)", "timeout-minutes": 30, "fetch-depth": 2, "node-options": "--max-old-space-size=4096"}]' }}
+      commitlint: true
+      changeset: false
+      fast: pnpm check:static
+      full: pnpm check:ci

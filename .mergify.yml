@@ -9,13 +9,9 @@ queue_rules:
       # lines must be present. Same checks as default.
       - "commits[*].commit_message ~= (?m)^git-subtree-dir: \\S+$"
       - "commits[*].commit_message ~= (?m)^git-subtree-split: [0-9a-f]{40}$"
-      - check-success = no merge conflicts
-      - check-success = build · lint · typecheck · test / static checks (pnpm check:static)
-      - or:
-          - check-success = commitlint / lint PR commits
-          - check-skipped = commitlint / lint PR commits
+      - check-success = checks / check
     merge_conditions:
-      - check-success = build · lint · typecheck · test / the gate (pnpm check:ci)
+      - check-success = checks / check
 
   - name: default
     queue_conditions:
@@ -23,10 +19,6 @@ queue_rules:
       # claim without trailers matches no queue and cannot merge at all.
       - "-commits[*].commit_message ~= (?m)^git-subtree-dir: \\S+$"
       - "-title ~= (?i)\\b(add|pull|update|sync|vendor|refresh|import)\\b[^.]*\\bsubtrees?\\b|\\bsubtrees?\\b[^.]*(\\badd\\b|\\bpull\\b|\\bupdate\\b|\\bsync\\b|\\bvendor\\b|\\brefresh\\b|\\bimport\\b)"
-      - check-success = no merge conflicts
-      - check-success = build · lint · typecheck · test / static checks (pnpm check:static)
-      - or:
-          - check-success = commitlint / lint PR commits
-          - check-skipped = commitlint / lint PR commits
+      - check-success = checks / check
     merge_conditions:
-      - check-success = build · lint · typecheck · test / the gate (pnpm check:ci)
+      - check-success = checks / check
