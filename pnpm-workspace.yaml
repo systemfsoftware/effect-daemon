@@ -78,6 +78,7 @@ minimumReleaseAgeExclude:
   - "@effect/*"
   - "@systemfsoftware/*"
 overrides:
+  "@opentelemetry/api": 1.10.0
   # Core packages are core's tarballs, taken whole through the flake (producer-tarballs); see AGENTS.md.
   "@systemfsoftware/conformance-spec@*": file:.deps/conformance-spec.tgz
   "@systemfsoftware/differential-spec@*": file:.deps/differential-spec.tgz
