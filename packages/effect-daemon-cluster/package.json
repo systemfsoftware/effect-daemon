@@ -52,7 +52,6 @@
   },
   "devDependencies": {
     "@effect/platform-node": "catalog:",
-    "@effect/sql-pg": "catalog:",
     "@effect/sql-pglite": "catalog:",
     "@microsoft/api-extractor": "catalog:",
     "@systemfsoftware/arethetypeswrong-cli": "catalog:",
@@ -69,7 +68,6 @@
     "effect": "catalog:",
     "oxlint": "catalog:oxlint",
     "rimraf": "catalog:",
-    "testcontainers": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

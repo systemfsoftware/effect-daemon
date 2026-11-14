@@ -11,6 +11,7 @@
   "toml": {},
   "yaml": {},
   "excludes": [
+    "repos/**",
     "**/node_modules",
     "**/dist",
     "**/*-lock.json",
