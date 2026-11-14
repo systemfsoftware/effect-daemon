@@ -3,7 +3,7 @@ import { ClusterMedium } from '@systemfsoftware/effect-daemon-cluster'
 import { Conformance as Medium } from '@systemfsoftware/effect-daemon-conformance'
 import { Supervisor } from '@systemfsoftware/effect-daemon-spec'
 import { Gherkin, Given, it, makeFeature, Then, When } from '@systemfsoftware/effect-gherkin-spec'
-import { Effect, Layer, Match } from 'effect'
+import { Duration, Effect, Layer, Match, Option, Ref, Schedule } from 'effect'
 import type { Scope } from 'effect'
 import type { Sharding } from 'effect/cluster'
 import {
@@ -12,6 +12,8 @@ import {
   nothingLeftRegistered,
   RunningChildAnsweredDead,
   scriptedSharding,
+  scriptedShardingOwning,
+  ShardScript,
 } from './__fixtures__/scripted-sharding.fixture.js'
 
 const Feature = makeFeature({ it })
@@ -87,10 +89,115 @@ const superviseDyingEntity: Effect.Effect<void, ChildNotReportedAsInferredDeath,
   yield* inferredDeathOnly(yield* medium.report(evidence))
 })
 
+const SINGLETON = 'orders/settlement'
+
+const countedSingleton = Effect.map(Ref.make(0), (runs) => ({
+  runs,
+  program: ClusterMedium.singletonChild({
+    name: SINGLETON,
+    run: (ready) => Ref.update(runs, (count) => count + 1).pipe(Effect.andThen(ready), Effect.andThen(Effect.never)),
+  }),
+}))
+
+const runsReach = (runs: Ref.Ref<number>, count: number) =>
+  Ref.get(runs).pipe(
+    Effect.repeat({ until: (seen) => seen >= count, schedule: Schedule.spaced(Duration.millis(10)) }),
+    Effect.timeoutOption(Duration.seconds(2)),
+    Effect.map(Option.isSome),
+  )
+
+const reportedWithin = <R>(report: Effect.Effect<Supervisor.Medium.TerminationReason, never, R>) =>
+  Effect.timeoutOption(report, Duration.millis(200))
+
+const standbyThenOwned = Effect.gen(function*() {
+  const { medium } = yield* ClusterMedium.port
+  const shards = yield* ShardScript
+  const { runs, program } = yield* countedSingleton
+  const evidence = yield* medium.start(program)
+  yield* evidence.ready
+  const aliveAsStandby = yield* medium.probe(evidence)
+  const runsAsStandby = yield* Ref.get(runs)
+  yield* shards.grant(SINGLETON)
+  const startedOnceOwned = yield* runsReach(runs, 1)
+  const reported = yield* reportedWithin(medium.report(evidence))
+  return { aliveAsStandby, runsAsStandby, startedOnceOwned, reported }
+})
+
+const handedOffAndBack = Effect.gen(function*() {
+  const { medium } = yield* ClusterMedium.port
+  const shards = yield* ShardScript
+  const { runs, program } = yield* countedSingleton
+  const evidence = yield* medium.start(program)
+  yield* evidence.ready
+  yield* shards.revoke(SINGLETON)
+  const aliveWhileAway = yield* medium.probe(evidence)
+  const reportedWhileAway = yield* reportedWithin(medium.report(evidence))
+  yield* shards.grant(SINGLETON)
+  const ranAgain = yield* runsReach(runs, 2)
+  return { aliveWhileAway, reportedWhileAway, ranAgain }
+})
+
+const standbyStopped = Effect.gen(function*() {
+  const { medium } = yield* ClusterMedium.port
+  const { program } = yield* countedSingleton
+  const evidence = yield* medium.start(program)
+  yield* evidence.ready
+  yield* medium.stop(evidence, { _tag: 'Brutal' })
+  const reported = yield* reportedWithin(medium.report(evidence))
+  yield* nothingLeftRegistered
+  return { reported }
+})
+
+const standbyEnvironment = () => Layer.build(Layer.merge(ClusterMedium.layer(), scriptedShardingOwning(false)))
+const ownedEnvironment = () => Layer.build(Layer.merge(ClusterMedium.layer(), scriptedShardingOwning(true)))
+
 Feature('Supervising children hosted by the cluster', { timeout: 120_000 })
   .withLayer(Layer.empty)
   .live(liveReason)
   .body(({ scenario }) => {
+    scenario(
+      'A singleton whose shard is on another runner waits as a standby and starts when the shard arrives',
+      Gherkin.Do.pipe(
+        Given('a cluster medium on a runner that owns no shard yet')('environment', standbyEnvironment),
+        When('a singleton is supervised and its shard then moves to this runner')(
+          'observed',
+          (s) => Effect.provide(standbyThenOwned, s.environment),
+        ),
+        Then('it was ready and alive without running, ran once its shard arrived, and nothing ended')((s, expect) =>
+          expect(s.observed).toEqual({
+            aliveAsStandby: true,
+            runsAsStandby: 0,
+            startedOnceOwned: true,
+            reported: Option.none(),
+          })
+        ),
+      ),
+    )
+
+    scenario(
+      'A singleton whose shard moves away and comes back keeps its place and runs again',
+      Gherkin.Do.pipe(
+        Given('a cluster medium on a runner that owns every shard')('environment', ownedEnvironment),
+        When('a running singleton loses its shard and later gets it back')(
+          'observed',
+          (s) => Effect.provide(handedOffAndBack, s.environment),
+        ),
+        Then('it stayed alive with nothing ended while away, and ran a second time on return')((s, expect) =>
+          expect(s.observed).toEqual({ aliveWhileAway: true, reportedWhileAway: Option.none(), ranAgain: true })
+        ),
+      ),
+    )
+
+    scenario(
+      'A standby singleton that is stopped ends as shut down and frees its name',
+      Gherkin.Do.pipe(
+        Given('a cluster medium on a runner that owns no shard yet')('environment', standbyEnvironment),
+        When('a waiting singleton is stopped')('observed', (s) => Effect.provide(standbyStopped, s.environment)),
+        Then('it ended as shut down and no name stays held')((s, expect) =>
+          expect(s.observed).toEqual({ reported: Option.some({ _tag: 'Shutdown' }) })
+        ),
+      ),
+    )
     scenario(
       'A scripted singleton child is gone once the supervision that started it stops',
       Gherkin.Do.pipe(
