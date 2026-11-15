@@ -1,0 +1,32 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    uses: systemfsoftware/pnpm-release-management/.github/workflows/release.yml@9615867c17489fb04be8bc74f568659d687df612
+    with:
+      ci-workflow: ci.yml
+      npm-publish: true
+  noop:
+    name: no release off main, so the run concludes success, not skipped
+    if: github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    permissions: {}
+    steps:
+      - run: echo "Release writes only from refs/heads/main; $GITHUB_REF runs nothing."
