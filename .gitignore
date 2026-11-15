@@ -16,5 +16,3 @@ temp/
 /deno.lock
 .timings/
 .sfs-tools/
-# Producer tarballs, copied in by the dev shell from nix.systemfsoftware.com; never committed
-.deps/

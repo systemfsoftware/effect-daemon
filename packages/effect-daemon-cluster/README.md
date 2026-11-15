@@ -5,7 +5,11 @@ and single-owner singletons are supervised with inferred death and eventual grou
 
 ## Installation
 
-This package is not on npm: take `@systemfsoftware/effect-daemon-cluster` from nix.systemfsoftware.com, the package registry for `@systemfsoftware` packages, through a flake input (see the repository README).
+```sh
+pnpm add @systemfsoftware/effect-daemon-cluster effect
+```
+
+Its peer dependencies, `effect@^4.1.2` and `typescript@>=7.0.0`, come from your project: this package declares them but does not install them, so one copy is shared with the rest of your project.
 
 ## Features
 

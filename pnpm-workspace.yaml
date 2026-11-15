@@ -66,11 +66,11 @@ catalogs:
     "@oxlint/plugins": ~1.90.0
     oxlint-tsgolint: 7.0.2005
   stryker:
-    "@systemfsoftware/stryker-ignorer-effect-schema-declarations": latest
-    "@systemfsoftware/stryker-ignorer-in-source-vitest-block": latest
-    "@systemfsoftware/stryker-js": latest
-    "@systemfsoftware/stryker-js-typescript-checker": latest
-    "@systemfsoftware/stryker-js-vitest-runner": latest
+    "@systemfsoftware/stryker-ignorer-effect-schema-declarations": ^0.3.1
+    "@systemfsoftware/stryker-ignorer-in-source-vitest-block": ^0.1.3
+    "@systemfsoftware/stryker-js": ^22.0.0
+    "@systemfsoftware/stryker-js-typescript-checker": ^9.0.1
+    "@systemfsoftware/stryker-js-vitest-runner": ^10.1.0
     "mutation-testing-elements": 3.9.0
 minimumReleaseAge: 4320
 minimumReleaseAgeExclude:
@@ -79,38 +79,6 @@ minimumReleaseAgeExclude:
   - "@systemfsoftware/*"
 overrides:
   "@opentelemetry/api": 1.10.0
-  # Core packages are core's tarballs, taken whole through the flake (producer-tarballs); see AGENTS.md.
-  "@systemfsoftware/conformance-spec@*": file:.deps/conformance-spec.tgz
-  "@systemfsoftware/differential-spec@*": file:.deps/differential-spec.tgz
-  "@systemfsoftware/effect-atom@*": file:.deps/effect-atom.tgz
-  "@systemfsoftware/effect-atom-react@*": file:.deps/effect-atom-react.tgz
-  "@systemfsoftware/effect-cell-types@*": file:.deps/effect-cell-types.tgz
-  "@systemfsoftware/effect-gherkin-spec@*": file:.deps/effect-gherkin-spec.tgz
-  "@systemfsoftware/effect-readiness@*": file:.deps/effect-readiness.tgz
-  "@systemfsoftware/effect-schema-discovery@*": file:.deps/effect-schema-discovery.tgz
-  "@systemfsoftware/effect-schema-law@*": file:.deps/effect-schema-law.tgz
-  "@systemfsoftware/effect-schema-recursion-budget@*": file:.deps/effect-schema-recursion-budget.tgz
-  "@systemfsoftware/effect-schema-vite@*": file:.deps/effect-schema-vite.tgz
-  "@systemfsoftware/effect-sim-kernel@*": file:.deps/effect-sim-kernel.tgz
-  "@systemfsoftware/effect-spec-runtime@*": file:.deps/effect-spec-runtime.tgz
-  "@systemfsoftware/omp-typescript-discipline@*": file:.deps/omp-typescript-discipline.tgz
-  "@systemfsoftware/oxlint-config-cell-architecture@*": file:.deps/oxlint-config-cell-architecture.tgz
-  "@systemfsoftware/oxlint-config-dmmf@*": file:.deps/oxlint-config-dmmf.tgz
-  "@systemfsoftware/oxlint-config-recommended@*": file:.deps/oxlint-config-recommended.tgz
-  "@systemfsoftware/oxlint-config-rule-authoring@*": file:.deps/oxlint-config-rule-authoring.tgz
-  "@systemfsoftware/oxlint-plugin-cell-architecture@*": file:.deps/oxlint-plugin-cell-architecture.tgz
-  "@systemfsoftware/oxlint-plugin-dmmf-workflow@*": file:.deps/oxlint-plugin-dmmf-workflow.tgz
-  "@systemfsoftware/oxlint-plugin-effect-platform@*": file:.deps/oxlint-plugin-effect-platform.tgz
-  "@systemfsoftware/oxlint-plugin-effect-schema@*": file:.deps/oxlint-plugin-effect-schema.tgz
-  "@systemfsoftware/oxlint-plugin-test-discipline@*": file:.deps/oxlint-plugin-test-discipline.tgz
-  "@systemfsoftware/storybook-gherkin@*": file:.deps/storybook-gherkin.tgz
-  "@systemfsoftware/stryker-config@*": file:.deps/stryker-config.tgz
-  "@systemfsoftware/trace-spec@*": file:.deps/trace-spec.tgz
-  "@systemfsoftware/trace-taxonomy@*": file:.deps/trace-taxonomy.tgz
-  "@systemfsoftware/tsconfig@*": file:.deps/tsconfig.tgz
-  "@systemfsoftware/tsdown-config@*": file:.deps/tsdown-config.tgz
-  "@systemfsoftware/vitest@*": file:.deps/vitest.tgz
-  "@systemfsoftware/vitest-config@*": file:.deps/vitest-config.tgz
   "@effect/tsgo": "catalog:"
   fast-check: "catalog:"
   vite: "catalog:"
