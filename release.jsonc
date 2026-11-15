@@ -1,0 +1,14 @@
+{
+  // Read by systemfsoftware/pnpm-release-management's release tools, which the
+  // reusable workflows in .github/workflows/ run. Each package is versioned
+  // through its change intents, tagged <pkg>@vX.Y.Z, released on GitHub and
+  // published to npm through trusted publishing.
+  "base": "main",
+  "branch": "changeset-release/main",
+  "versioning": {
+    "strategy": "changesets",
+  },
+  // A pull request whose head moves a publishable package's turbo `build` hash
+  // away from the base ships an intent naming that package.
+  "gate": { "strategy": "turbo", "task": "build" },
+}
