@@ -14,18 +14,11 @@ Extracted from `systemfsoftware/systemfsoftware` (core); package history came wi
 | `@systemfsoftware/effect-daemon-socket`      | 1.0.3   | yes         |
 | `@systemfsoftware/effect-daemon-cluster`     | 1.0.3   | yes         |
 
-`effect-readiness` is a second producer in `flake.nix`, pinned to its repository's `main`, because core no longer ships it.
-
 ## Dependencies on core
 
-nix.systemfsoftware.com is the package registry for `@systemfsoftware` packages: producers push package tarballs there from `main`, consumers substitute them through flake inputs, and nothing goes to npm.
+`@systemfsoftware` packages come from npm like any other dependency: package manifests and catalogs name caret ranges and `pnpm-lock.yaml` holds the exact versions. Take newer ones with `pnpm update '@systemfsoftware/*'`. `flake.nix` pins core at a full commit (input `core`) only for its dprint build and its nixpkgs.
 
-Core is a flake input (`core`, pinned at a full commit). `flake.nix` takes its tarballs whole through
-`lib.mkProducerTarballs`, and `pnpm-workspace.yaml` maps each one to `file:.deps/<name>.tgz` through `overrides`.
-To take newer core packages: bump the `core` input, run `nix flake lock`, regenerate the overrides with
-`nix eval --raw .#packages.x86_64-linux.producer-tarballs.overrides`, then run `pnpm install`.
-
-Local setup (the dev shell copies the tarballs into `.deps/`):
+Local setup:
 
 ```bash
 nix develop --accept-flake-config --command pnpm install

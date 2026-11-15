@@ -14,62 +14,11 @@ Erlang/OTP-style supervision trees for Effect. A supervisor starts its children 
 
 ## Install
 
-`@systemfsoftware` packages are distributed as Nix tarballs from `nix.systemfsoftware.com`, not from npm, so do not run `npm install` or `pnpm add` for them. Take them through a flake. Third-party peers such as `effect` install from npm as usual.
-
-Add the producer as a flake input in your project's `flake.nix`. Pin it to a full commit SHA or a release tag:
-
-```nix
-{
-  nixConfig = {
-    extra-substituters = "https://nix.systemfsoftware.com";
-    extra-trusted-public-keys = "nix-cache-1:wXA8I4DayNW9q6enUyQA/P/nT38pGSTLt374t3gsn7M=";
-  };
-
-  inputs = {
-    nixpkgs.follows = "effect-daemon/nixpkgs";
-    effect-daemon.url = "github:systemfsoftware/effect-daemon/<rev>";
-    pnpm-release-management.url = "github:systemfsoftware/pnpm-release-management";
-  };
-
-  outputs = { self, nixpkgs, effect-daemon, pnpm-release-management }: {
-    packages = nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] (system:
-      let pkgs = nixpkgs.legacyPackages.${system}; in rec {
-        producer-tarballs = pnpm-release-management.lib.mkProducerTarballs {
-          inherit pkgs;
-          producers = { inherit effect-daemon; };
-        };
-        pnpm-store = pnpm-release-management.lib.mkPnpmConsumerStore {
-          inherit pkgs;
-          src = self;
-          files.".deps" = producer-tarballs;
-        };
-      });
-
-    devShells = nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] (system:
-      let pkgs = nixpkgs.legacyPackages.${system}; in {
-        default = pkgs.mkShell {
-          packages = [ pkgs.nodejs_24 pkgs.pnpm_12 ];
-          shellHook = self.packages.${system}.producer-tarballs.shellHook;
-        };
-      });
-  };
-}
-```
-
-Then, inside `nix develop`:
-
 ```sh
-nix eval --raw .#producer-tarballs.overrides   # paste the output into pnpm-workspace.yaml
-pnpm add effect
+pnpm add @systemfsoftware/effect-daemon-spec @systemfsoftware/conformance-spec effect
 ```
 
-Declare each package you use in `package.json` as a tarball in `.deps/`, for example:
-
-```json
-"@systemfsoftware/effect-daemon-spec": "file:.deps/effect-daemon-spec.tgz"
-```
-
-Add `.deps/` to `.gitignore`. Add the medium you supervise children with (`effect-daemon-process`, `effect-daemon-socket` or `effect-daemon-cluster`), and `effect-daemon-conformance` to prove a medium of your own.
+Add the medium you supervise children with (`effect-daemon-process`, `effect-daemon-socket` or `effect-daemon-cluster`), and `effect-daemon-conformance` to prove a medium of your own.
 
 ## Quick start
 
