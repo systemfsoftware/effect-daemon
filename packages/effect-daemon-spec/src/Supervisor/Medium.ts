@@ -1,4 +1,4 @@
-import { Context, Effect } from 'effect'
+import { Context, Effect, type Stream } from 'effect'
 import type { ShutdownMode } from '../kernel/SupervisorPolicy.schema.js'
 import type { TerminationReason } from '../kernel/TerminationReport.schema.js'
 export { BrutalShutdown, GracefulShutdown, InfinityShutdown, ShutdownMode } from '../kernel/SupervisorPolicy.schema.js'
@@ -13,7 +13,9 @@ export {
   ShutdownTermination,
   TerminationReason,
 } from '../kernel/TerminationReport.schema.js'
+export { Acquired, MediumActivity, Released } from './MediumActivity.schema.js'
 export { GroupStopGuarantee, MediumDeclaration, MediumReporting } from './MediumDeclaration.schema.js'
+import type { MediumActivity } from './MediumActivity.schema.js'
 import type { MediumDeclaration } from './MediumDeclaration.schema.js'
 
 export const StartedTypeId: unique symbol = Symbol.for('@systemfsoftware/effect-daemon-spec/Medium/Started')
@@ -22,16 +24,15 @@ export type StartedTypeId = typeof StartedTypeId
 export const StoppedTypeId: unique symbol = Symbol.for('@systemfsoftware/effect-daemon-spec/Medium/Stopped')
 export type StoppedTypeId = typeof StoppedTypeId
 
-/**
- * Evidence that a medium started a child (KTD8): unforgeable, because only a
- * medium's `start` port can mint it. It carries the readiness signal the kernel
- * races against its start-deadline timer (R10); the termination report and the
- * single-shot liveness probe are the medium's `report` and `probe` ports run
- * over this evidence, so neither can observe a child that never started.
- */
+export interface StartedActivity {
+  readonly initiallyStandby: boolean
+  readonly changes: Stream.Stream<MediumActivity, never>
+}
+
 export interface Started {
   readonly [StartedTypeId]: StartedTypeId
   readonly ready: Effect.Effect<void>
+  readonly activity?: StartedActivity | undefined
 }
 
 /**

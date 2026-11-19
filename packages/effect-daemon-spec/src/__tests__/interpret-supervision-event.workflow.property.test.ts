@@ -82,10 +82,11 @@ const declaredChild = (childId: string, restartType: RestartType, significant: b
   probeFailureThreshold: 2,
 })
 
-const childOf = (childId: string, generation: number, status: ChildStatus): ChildInstance => ({
+const childOf = (childId: string, generation: number, status: ChildStatus, epoch = 0): ChildInstance => ({
   childId,
   generation,
   status,
+  epoch,
   consecutiveRestarts: 0,
   probeFailures: 0,
 })
@@ -94,7 +95,7 @@ const coreWith = (
   policy: SupervisionPolicy,
   children: ReadonlyArray<ChildInstance>,
   restartStamps: ReadonlyArray<number>,
-): SupervisorCore => ({ policy, children, restartStamps, nextOrdinal: 0 })
+): SupervisorCore => ({ policy, children, restartStamps, nextOrdinal: 0, awaiting: [] })
 
 const runningOf = (core: SupervisorCore): SupervisorState => new Running({ core })
 
@@ -139,7 +140,7 @@ const childTimerEvent = (kind: TimerKind, childId: string, generation: number, a
   _tag: 'TimerElapsed',
   at,
   kind,
-  target: { _tag: 'ChildTimer', childId, generation },
+  target: { _tag: 'ChildTimer', childId, generation, epoch: 0 },
 })
 
 const supervisorTimerEvent = (kind: TimerKind, at: EventTime): SupervisionEvent => ({
@@ -404,6 +405,8 @@ const textOf = (items: ReadonlyArray<string | number>): ReadonlyArray<string> =>
 const idSeqOf = (children: ReadonlyArray<ChildInstance>): ReadonlyArray<string> =>
   Arr.map(children, (child) => child.childId)
 
+const awaitingIdsOf = (core: SupervisorCore): ReadonlyArray<string> => Arr.map(core.awaiting, (start) => start.childId)
+
 const labelOf = (child: ChildInstance): string => `${child.childId}:${child.generation}:${child.status}`
 
 const startIdsFromDecision = (decision: SupervisionDecision): ReadonlyArray<string> =>
@@ -492,7 +495,8 @@ it.prop(
             Match.value(coreOf(decision)).pipe(
               Match.tag('Some', ({ value }) =>
                 sameSeq(stopIdsOf(commandsOf(decision)), Arr.reverse(groupIds)) &&
-                sameSeq(startIdsOf(commandsOf(decision)), comingIds) &&
+                sameSeq(startIdsOf(commandsOf(decision)), Arr.take(comingIds, 1)) &&
+                sameSeq(awaitingIdsOf(value), Arr.drop(comingIds, 1)) &&
                 sameSeq(textOf(value.restartStamps), textOf([at])) &&
                 sameSeq(
                   Arr.map(
@@ -600,6 +604,51 @@ it.prop(
 )
 
 it.prop(
+  '∀c_CoolDown_=ResetsEpoch',
+  { of: [PositiveMillis, EventTime], subject: interpretSupervisionEvent },
+  (subject, [millis, at0]) => {
+    const t0 = at0
+    const policy = policyWith({
+      strategy: 'one_for_one',
+      intensity: 1,
+      coolDown: { _tag: 'CoolDownAfter', millis },
+      childDeclarations: [declaredChild('c0', 'permanent', false)],
+    })
+    const cooled = new CoolingDown({
+      core: coreWith(policy, [childOf('c0', 2, 'ready', 3)], []),
+      millis,
+    })
+    const resumedAt = t0 + 1 + millis
+    const resumed = folded(subject, cooled, [supervisorTimerEvent('cool_down', resumedAt)])
+    return Match.value(lastDecisionOf(resumed)).pipe(
+      Match.tag('StartChildren', (decision) =>
+        Match.value(coreOf(decision)).pipe(
+          Match.tag('Some', ({ value }) =>
+            Match.value(Arr.findFirst(value.children, (child) =>
+              child.childId === 'c0')).pipe(
+                Match.tag('Some', ({ value: child }) =>
+                  child.epoch === 0 &&
+                  Arr.some(commandsOf(decision).arms, (arm) =>
+                    Match.value(arm).pipe(
+                      Match.tag('ArmChildTimer', (timer) =>
+                        timer.kind === 'start_deadline' && timer.childId === 'c0' && timer.epoch === 0 &&
+                        timer.deadline === resumedAt + 50),
+                      Match.tag('ArmSupervisorTimer', () => false),
+                      Match.exhaustive,
+                    ))),
+                Match.tag('None', () => false),
+                Match.exhaustive,
+              )),
+          Match.tag('None', () =>
+            false),
+          Match.exhaustive,
+        )),
+      Match.orElse(() => false),
+    )
+  },
+)
+
+it.prop(
   '∀g_WindowPrune_≡Period',
   { of: [PositiveMillis, EventTime], subject: interpretSupervisionEvent },
   (subject, [gap, at0]) => {
@@ -643,7 +692,12 @@ it.prop(
 
     return isRestartFamily(decision) && stamped &&
       Arr.length(stopIdsOf(commandsOf(decision))) === 3 &&
-      Arr.length(startIdsOf(commandsOf(decision))) === 3
+      sameSeq(startIdsOf(commandsOf(decision)), ['c0']) &&
+      Match.value(coreOf(decision)).pipe(
+        Match.tag('Some', ({ value }) => sameSeq(awaitingIdsOf(value), ['c1', 'c2'])),
+        Match.tag('None', () => false),
+        Match.exhaustive,
+      )
   },
 )
 
@@ -1060,7 +1114,10 @@ it.prop(
       strategy: 'one_for_one',
       childDeclarations: [declaredChild(childId, 'permanent', false)],
     })
-    const state = new Restarting({ core: coreWith(policy, [], []), pending: [{ childId, generation: 1 }] })
+    const state = new Restarting({
+      core: coreWith(policy, [childOf(childId, 1, 'starting')], []),
+      pending: [{ childId, generation: 1 }],
+    })
     const decision = decidedOf(subject, stepOf(state, childTimerEvent('backoff', childId, 1, 10)))
 
     const started = startIdsOf(commandsOf(decision))

@@ -1,6 +1,6 @@
 import { Schema } from 'effect'
 import { TimerKind } from './SupervisionEvent.schema.js'
-import { ChildId, Deadline, Generation, RequestId } from './SupervisionLimits.schema.js'
+import { ChildId, Deadline, Epoch, Generation, RequestId } from './SupervisionLimits.schema.js'
 import { ShutdownMode } from './SupervisorPolicy.schema.js'
 import { SupervisorExit, TerminationReason } from './TerminationReport.schema.js'
 
@@ -18,6 +18,7 @@ export const ArmChildTimer = Schema.TaggedStruct('ArmChildTimer', {
   kind: TimerKind,
   childId: ChildId,
   generation: Generation,
+  epoch: Epoch,
   deadline: Deadline,
 })
 export type ArmChildTimer = typeof ArmChildTimer.Type

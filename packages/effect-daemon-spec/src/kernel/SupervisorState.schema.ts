@@ -3,6 +3,7 @@ import { dual } from 'effect/Function'
 import type { SupervisionDecision } from './interpret-supervision-event.workflow.js'
 import {
   ChildId,
+  Epoch,
   EventTime,
   Generation,
   Ordinal,
@@ -15,28 +16,30 @@ import { SupervisorExit, TerminationReason } from './TerminationReport.schema.js
 
 const StateTypeId: unique symbol = Symbol.for('@systemfsoftware/effect-daemon/SupervisorState')
 
-export const ChildStatus = Schema.Literals(['starting', 'ready', 'stopping'])
+export const ChildStatus = Schema.Literals(['standby', 'starting', 'ready', 'stopping'])
 export type ChildStatus = typeof ChildStatus.Type
 
 export const ChildInstance = Schema.Struct({
   childId: ChildId,
   generation: Generation,
   status: ChildStatus,
+  epoch: Epoch,
   consecutiveRestarts: RestartCount,
   probeFailures: ProbeFailures,
 })
 export type ChildInstance = typeof ChildInstance.Type
+
+export const ChildStart = Schema.Struct({ childId: ChildId, generation: Generation })
+export type ChildStart = typeof ChildStart.Type
 
 export const SupervisorCore = Schema.Struct({
   policy: SupervisionPolicy,
   children: Schema.Array(ChildInstance),
   restartStamps: Schema.Array(EventTime),
   nextOrdinal: Ordinal,
+  awaiting: Schema.Array(ChildStart),
 })
 export type SupervisorCore = typeof SupervisorCore.Type
-
-export const ChildStart = Schema.Struct({ childId: ChildId, generation: Generation })
-export type ChildStart = typeof ChildStart.Type
 
 export class Running
   extends Schema.TaggedClass<Running, { readonly brand: unique symbol }>()('Running', { core: SupervisorCore })
@@ -83,11 +86,13 @@ export const initialStateOf = (policy: SupervisionPolicy): SupervisorCore => ({
     childId: declaration.childId,
     generation: 0,
     status: 'starting',
+    epoch: 0,
     consecutiveRestarts: 0,
     probeFailures: 0,
   })),
   restartStamps: [],
   nextOrdinal: 0,
+  awaiting: [],
 })
 
 const withCore = (state: SupervisorState, core: SupervisorCore): SupervisorState =>

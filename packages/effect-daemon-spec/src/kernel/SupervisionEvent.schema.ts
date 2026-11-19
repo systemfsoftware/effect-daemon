@@ -1,11 +1,15 @@
 import { Schema } from 'effect'
-import { ChildId, EventTime, Generation, RequestId } from './SupervisionLimits.schema.js'
+import { ChildId, Epoch, EventTime, Generation, RequestId } from './SupervisionLimits.schema.js'
 import { TerminationReason } from './TerminationReport.schema.js'
 
 export const TimerKind = Schema.Literals(['start_deadline', 'backoff', 'liveness_tick', 'cool_down'])
 export type TimerKind = typeof TimerKind.Type
 
-export const ChildTimerTarget = Schema.TaggedStruct('ChildTimer', { childId: ChildId, generation: Generation })
+export const ChildTimerTarget = Schema.TaggedStruct('ChildTimer', {
+  childId: ChildId,
+  generation: Generation,
+  epoch: Epoch,
+})
 export type ChildTimerTarget = typeof ChildTimerTarget.Type
 
 export const SupervisorTimerTarget = Schema.TaggedStruct('SupervisorTimer', {})
@@ -37,6 +41,27 @@ export const ChildReady = Schema.TaggedStruct('ChildReady', {
   generation: Generation,
 })
 export type ChildReady = typeof ChildReady.Type
+
+export const ChildStandby = Schema.TaggedStruct('ChildStandby', {
+  at: EventTime,
+  childId: ChildId,
+  generation: Generation,
+})
+export type ChildStandby = typeof ChildStandby.Type
+
+export const ChildAcquired = Schema.TaggedStruct('ChildAcquired', {
+  at: EventTime,
+  childId: ChildId,
+  generation: Generation,
+})
+export type ChildAcquired = typeof ChildAcquired.Type
+
+export const ChildReleased = Schema.TaggedStruct('ChildReleased', {
+  at: EventTime,
+  childId: ChildId,
+  generation: Generation,
+})
+export type ChildReleased = typeof ChildReleased.Type
 
 export const ChildTerminated = Schema.TaggedStruct('ChildTerminated', {
   at: EventTime,
@@ -92,6 +117,9 @@ export const SupervisionEvent = Schema.Union([
   SupervisorStarted,
   ChildStarted,
   ChildReady,
+  ChildStandby,
+  ChildAcquired,
+  ChildReleased,
   ChildTerminated,
   ChildStopped,
   ProbeResult,

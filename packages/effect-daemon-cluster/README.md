@@ -21,9 +21,12 @@ Its peer dependencies, `effect@^4.1.2` and `typescript@>=7.0.0`, come from your 
   an inferred failure.
 - **The declared loss**: the medium declares `{ reporting: 'inferred', groupStop: 'eventual' }`, so
   the conformance kit holds it only to what it can observe and honour.
-- **Standby and handoff**: a singleton whose shard another runner owns is announced ready at once
-  and waits; it starts when the shard arrives. A run interrupted because its shard moved away is a
-  handoff, not a termination: the child stays registered and nothing is reported.
+- **Standby and handoff**: a singleton whose shard another runner owns registers as a standby: it is
+  not ready, it is not bound by the start deadline, and children declared after it do not start until
+  it owns its shard and its run signals ready. The start deadline is armed when the shard arrives, so
+  `startTimeoutMillis` bounds the real post-acquisition initialization. A run interrupted because its
+  shard moved away is a handoff, not a termination: the child returns to standby, stays registered,
+  and nothing is reported, restarted or charged against the restart intensity.
 - **Singletons across processes over Postgres**: `ClusterMedium.sqlRunnerLayer` runs `Sharding`
   over `SqlRunnerStorage` with no-op runner transport, health and message storage. The oldest live
   runner owns every shard, so a joining process waits as a standby, and a runner whose sessions are

@@ -75,16 +75,27 @@ const bootCommandsOf = (
 
 const startIdOf = (start: StartChild): string => start.childId
 
+const awaitingIdOf = (start: { readonly childId: string }): string => start.childId
+
 it.prop(
-  '∀b_BootStart_=DeclaredOrder',
+  '∀b_BootStart_=FirstAndQueueRest',
   { of: [Schema.Array(ChildDeclaration), EventTime], subject: interpretSupervisionEvent },
   (subject, [drawn, at]) => {
     const ids = idsOf(drawn)
-    const commands = bootCommandsOf(subject, policyOf('one_for_one', declarationsOf(drawn)), at)
-    return commands.stops.length === 0 &&
-      commands.replies.length === 0 &&
-      commands.terminates.length === 0 &&
-      Arr.join(Arr.map(commands.starts, startIdOf), '|') === Arr.join(ids, '|')
+    if (Arr.dedupe(ids).length !== ids.length) return true
+    const decision = bootsTo(subject, policyOf('one_for_one', declarationsOf(drawn)), at)
+    return Match.value(decision).pipe(
+      Match.tag(
+        'StartChildren',
+        (started) =>
+          Arr.join(Arr.map(started.commands.starts, startIdOf), '|') === Arr.join(Arr.take(ids, 1), '|') &&
+          Arr.join(Arr.map(started.core.awaiting, awaitingIdOf), '|') === Arr.join(Arr.drop(ids, 1), '|') &&
+          started.commands.stops.length === 0 &&
+          started.commands.replies.length === 0 &&
+          started.commands.terminates.length === 0,
+      ),
+      Match.orElse(() => false),
+    )
   },
 )
 
@@ -101,7 +112,7 @@ it.prop(
         Match.tag('ArmSupervisorTimer', () => false),
         Match.exhaustive,
       )
-    return commands.arms.length === ids.length && Arr.every(commands.arms, deadlineHolds)
+    return commands.arms.length === Arr.length(Arr.take(ids, 1)) && Arr.every(commands.arms, deadlineHolds)
   },
 )
 

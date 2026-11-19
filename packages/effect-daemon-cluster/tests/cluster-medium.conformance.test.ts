@@ -114,13 +114,14 @@ const standbyThenOwned = Effect.gen(function*() {
   const shards = yield* ShardScript
   const { runs, program } = yield* countedSingleton
   const evidence = yield* medium.start(program)
-  yield* evidence.ready
+  const readyWhileStandby = yield* Effect.timeoutOption(evidence.ready, Duration.millis(100))
   const aliveAsStandby = yield* medium.probe(evidence)
   const runsAsStandby = yield* Ref.get(runs)
   yield* shards.grant(SINGLETON)
+  yield* evidence.ready
   const startedOnceOwned = yield* runsReach(runs, 1)
   const reported = yield* reportedWithin(medium.report(evidence))
-  return { aliveAsStandby, runsAsStandby, startedOnceOwned, reported }
+  return { readyWhileStandby, aliveAsStandby, runsAsStandby, startedOnceOwned, reported }
 })
 
 const handedOffAndBack = Effect.gen(function*() {
@@ -141,7 +142,6 @@ const standbyStopped = Effect.gen(function*() {
   const { medium } = yield* ClusterMedium.port
   const { program } = yield* countedSingleton
   const evidence = yield* medium.start(program)
-  yield* evidence.ready
   yield* medium.stop(evidence, { _tag: 'Brutal' })
   const reported = yield* reportedWithin(medium.report(evidence))
   yield* nothingLeftRegistered
@@ -163,13 +163,15 @@ Feature('Supervising children hosted by the cluster', { timeout: 120_000 })
           'observed',
           (s) => Effect.provide(standbyThenOwned, s.environment),
         ),
-        Then('it was ready and alive without running, ran once its shard arrived, and nothing ended')((s, expect) =>
-          expect(s.observed).toEqual({
-            aliveAsStandby: true,
-            runsAsStandby: 0,
-            startedOnceOwned: true,
-            reported: Option.none(),
-          })
+        Then('it was not ready yet stayed alive without running, ran once its shard arrived, and nothing ended')(
+          (s, expect) =>
+            expect(s.observed).toEqual({
+              readyWhileStandby: Option.none(),
+              aliveAsStandby: true,
+              runsAsStandby: 0,
+              startedOnceOwned: true,
+              reported: Option.none(),
+            }),
         ),
       ),
     )
