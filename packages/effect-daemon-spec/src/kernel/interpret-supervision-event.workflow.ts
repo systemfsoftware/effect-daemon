@@ -1041,6 +1041,7 @@ const cooledRestartOf = (core: SupervisorCore, at: EventTime): SupervisionDecisi
   const fresh: ReadonlyArray<ChildInstance> = Arr.map(core.children, (child) => ({
     ...child,
     status: 'starting',
+    epoch: 0,
     consecutiveRestarts: 0,
     probeFailures: 0,
   }))

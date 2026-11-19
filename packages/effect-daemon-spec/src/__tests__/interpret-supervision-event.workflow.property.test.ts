@@ -82,11 +82,11 @@ const declaredChild = (childId: string, restartType: RestartType, significant: b
   probeFailureThreshold: 2,
 })
 
-const childOf = (childId: string, generation: number, status: ChildStatus): ChildInstance => ({
+const childOf = (childId: string, generation: number, status: ChildStatus, epoch = 0): ChildInstance => ({
   childId,
   generation,
   status,
-  epoch: 0,
+  epoch,
   consecutiveRestarts: 0,
   probeFailures: 0,
 })
@@ -600,6 +600,51 @@ it.prop(
     ])
 
     return armed && restarted && isRestartFamily(lastDecisionOf(afterReset))
+  },
+)
+
+it.prop(
+  '∀c_CoolDown_=ResetsEpoch',
+  { of: [PositiveMillis, EventTime], subject: interpretSupervisionEvent },
+  (subject, [millis, at0]) => {
+    const t0 = at0
+    const policy = policyWith({
+      strategy: 'one_for_one',
+      intensity: 1,
+      coolDown: { _tag: 'CoolDownAfter', millis },
+      childDeclarations: [declaredChild('c0', 'permanent', false)],
+    })
+    const cooled = new CoolingDown({
+      core: coreWith(policy, [childOf('c0', 2, 'ready', 3)], []),
+      millis,
+    })
+    const resumedAt = t0 + 1 + millis
+    const resumed = folded(subject, cooled, [supervisorTimerEvent('cool_down', resumedAt)])
+    return Match.value(lastDecisionOf(resumed)).pipe(
+      Match.tag('StartChildren', (decision) =>
+        Match.value(coreOf(decision)).pipe(
+          Match.tag('Some', ({ value }) =>
+            Match.value(Arr.findFirst(value.children, (child) =>
+              child.childId === 'c0')).pipe(
+                Match.tag('Some', ({ value: child }) =>
+                  child.epoch === 0 &&
+                  Arr.some(commandsOf(decision).arms, (arm) =>
+                    Match.value(arm).pipe(
+                      Match.tag('ArmChildTimer', (timer) =>
+                        timer.kind === 'start_deadline' && timer.childId === 'c0' && timer.epoch === 0 &&
+                        timer.deadline === resumedAt + 50),
+                      Match.tag('ArmSupervisorTimer', () => false),
+                      Match.exhaustive,
+                    ))),
+                Match.tag('None', () => false),
+                Match.exhaustive,
+              )),
+          Match.tag('None', () =>
+            false),
+          Match.exhaustive,
+        )),
+      Match.orElse(() => false),
+    )
   },
 )
 
