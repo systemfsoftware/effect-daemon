@@ -15,7 +15,7 @@ import {
   Stream,
 } from 'effect'
 import type { SupervisionEvent, TimerKind } from '../kernel/SupervisionEvent.schema.js'
-import type { ChildId, Generation } from '../kernel/SupervisionLimits.schema.js'
+import type { ChildId, Epoch, Generation } from '../kernel/SupervisionLimits.schema.js'
 import { ReplyStartAccepted } from '../kernel/SupervisorCommand.schema.js'
 import type {
   StartChild,
@@ -123,11 +123,12 @@ const timerEventOf = (
   kind: TimerKind,
   childId: ChildId,
   generation: Generation,
+  epoch: Epoch,
 ): SupervisionEvent => ({
   _tag: 'TimerElapsed',
   at: 0,
   kind,
-  target: { _tag: 'ChildTimer', childId, generation },
+  target: { _tag: 'ChildTimer', childId, generation, epoch },
 })
 
 const supervisorTimerEventOf = (kind: TimerKind): SupervisionEvent => ({
@@ -155,6 +156,14 @@ const knownStarted = (
   Effect.map(Ref.get(evidenceOf(handle)), (known) => HashMap.get(known, evidenceKeyOf(childId, generation)))
 
 const watchReadiness = (
+  handle: RunningSupervisor,
+  evidence: Started,
+  childId: ChildId,
+  generation: Generation,
+): Effect.Effect<void, never, Scope.Scope> =>
+  evidence.activity === undefined ? forkReadinessWatch(handle, evidence, childId, generation) : Effect.void
+
+const forkReadinessWatch = (
   handle: RunningSupervisor,
   evidence: Started,
   childId: ChildId,
@@ -329,7 +338,7 @@ const executeArm = (
 ): Effect.Effect<void, never, Scope.Scope> =>
   Match.value(arm).pipe(
     Match.tag('ArmChildTimer', (timer) =>
-      armTimer(acquired, timer.deadline, timerEventOf(timer.kind, timer.childId, timer.generation))),
+      armTimer(acquired, timer.deadline, timerEventOf(timer.kind, timer.childId, timer.generation, timer.epoch))),
     Match.tag('ArmSupervisorTimer', (timer) =>
       armTimer(acquired, timer.deadline, supervisorTimerEventOf(timer.kind))),
     Match.exhaustive,

@@ -3,7 +3,7 @@ import { Array as Arr, Cause, Match, Number as Num, Option, Result, Schema } fro
 import { SupervisionEvent } from './SupervisionEvent.schema.js'
 import type { TimerKind, TimerTarget } from './SupervisionEvent.schema.js'
 import { Millis, PositiveMillis } from './SupervisionLimits.schema.js'
-import type { EventTime, Generation, RequestId } from './SupervisionLimits.schema.js'
+import type { Epoch, EventTime, Generation, RequestId } from './SupervisionLimits.schema.js'
 import { ChildId } from './SupervisionLimits.schema.js'
 import { StopChild, SupervisorCommands } from './SupervisorCommand.schema.js'
 import type {
@@ -167,12 +167,15 @@ const drainAwaitingOf = (
   at: EventTime,
 ): { readonly core: SupervisorCore; readonly commands: SupervisorCommands } => {
   const issuable = Arr.filter(core.awaiting, (start) => startIssues(core, start))
-  const remaining = Arr.filter(core.awaiting, (start) => !Arr.contains(issuable, start))
+  const remaining = Arr.filter(
+    core.awaiting,
+    (start) => [Arr.contains(issuable, start) === false, startIsLive(core, start)].every((holds) => holds),
+  )
   return {
     core: { ...core, awaiting: remaining },
     commands: commandsIn({
       starts: Arr.map(issuable, startCommandOf),
-      arms: Arr.map(issuable, (start) => deadlineCommandOf(start, at + startTimeoutOf(core, start))),
+      arms: Arr.map(issuable, (start) => deadlineCommandOf(start, at + startTimeoutOf(core, start), 0)),
     }),
   }
 }
@@ -279,6 +282,7 @@ const restartingOf = (child: ChildInstance, generation: Generation): ChildInstan
   childId: child.childId,
   generation,
   status: 'starting',
+  epoch: 0,
   consecutiveRestarts: child.consecutiveRestarts + 1,
   probeFailures: 0,
 })
@@ -286,6 +290,7 @@ const readiedOf = (child: ChildInstance): ChildInstance => ({
   childId: child.childId,
   generation: child.generation,
   status: 'ready',
+  epoch: child.epoch,
   consecutiveRestarts: 0,
   probeFailures: 0,
 })
@@ -294,6 +299,7 @@ const acquiredOf = (child: ChildInstance): ChildInstance => ({
   childId: child.childId,
   generation: child.generation,
   status: 'starting',
+  epoch: child.epoch + 1,
   consecutiveRestarts: child.consecutiveRestarts,
   probeFailures: 0,
 })
@@ -302,6 +308,7 @@ const standbyOf = (child: ChildInstance): ChildInstance => ({
   childId: child.childId,
   generation: child.generation,
   status: 'standby',
+  epoch: child.epoch,
   consecutiveRestarts: child.consecutiveRestarts,
   probeFailures: child.probeFailures,
 })
@@ -361,14 +368,16 @@ const backoffCommandOf = (start: ChildStart, deadline: EventTime): ArmChildTimer
   kind: 'backoff',
   childId: start.childId,
   generation: start.generation,
+  epoch: 0,
   deadline,
 })
 
-const deadlineCommandOf = (start: ChildStart, deadline: EventTime): ArmChildTimer => ({
+const deadlineCommandOf = (start: ChildStart, deadline: EventTime, epoch: Epoch): ArmChildTimer => ({
   _tag: 'ArmChildTimer',
   kind: 'start_deadline',
   childId: start.childId,
   generation: start.generation,
+  epoch,
   deadline,
 })
 
@@ -377,6 +386,7 @@ const tickCommandOf = (child: ChildInstance, deadline: EventTime): ArmChildTimer
   kind: 'liveness_tick',
   childId: child.childId,
   generation: child.generation,
+  epoch: child.epoch,
   deadline,
 })
 
@@ -585,18 +595,36 @@ type RestartOutcome = {
 const restartOutcomeOf = (core: SupervisorCore, scope: RestartScope, at: EventTime): RestartOutcome => {
   const nextCore = stampedCoreOf(core, scope, at)
   const phased = phasedCommands(core, at, scope.coming)
-  const queued: SupervisorCore = {
-    ...nextCore,
-    awaiting: enqueueStarts(nextCore.awaiting, phased.issuable),
-  }
-  const drained = drainAwaitingOf(queued, at)
-  return {
-    core: drained.core,
-    stops: scope.stops,
-    pending: phased.pending,
-    commands: appendCommands(commandsIn({ stops: scope.stops, arms: phased.arms }), drained.commands),
-    exhausted: Arr.length(nextCore.restartStamps) > nextCore.policy.intensity,
-  }
+  return Match.value(core.policy.strategy).pipe(
+    Match.when('one_for_one', () => ({
+      core: { ...nextCore, awaiting: Arr.filter(nextCore.awaiting, (start) => startIsLive(nextCore, start)) },
+      stops: scope.stops,
+      pending: phased.pending,
+      commands: commandsIn({
+        stops: scope.stops,
+        arms: [
+          ...phased.arms,
+          ...Arr.map(phased.issuable, (start) => deadlineCommandOf(start, at + startTimeoutOf(core, start), 0)),
+        ],
+        starts: Arr.map(phased.issuable, startCommandOf),
+      }),
+      exhausted: Arr.length(nextCore.restartStamps) > nextCore.policy.intensity,
+    })),
+    Match.orElse((): RestartOutcome => {
+      const queued: SupervisorCore = {
+        ...nextCore,
+        awaiting: enqueueStarts(nextCore.awaiting, phased.issuable),
+      }
+      const drained = drainAwaitingOf(queued, at)
+      return {
+        core: drained.core,
+        stops: scope.stops,
+        pending: phased.pending,
+        commands: appendCommands(commandsIn({ stops: scope.stops, arms: phased.arms }), drained.commands),
+        exhausted: Arr.length(nextCore.restartStamps) > nextCore.policy.intensity,
+      }
+    }),
+  )
 }
 
 const restartedDecisionOf = (
@@ -786,7 +814,7 @@ const readyInRunning = (
 const becomingReady = (core: SupervisorCore, child: ChildInstance, at: EventTime): SupervisionDecision =>
   Match.value(child.status).pipe(
     Match.when('starting', () => readiedDecisionOf(core, child, at)),
-    Match.when('standby', () => readiedDecisionOf(core, child, at)),
+    Match.when('standby', () => holdOf(core)),
     Match.when('ready', () => holdOf(core)),
     Match.when('stopping', () => holdOf(core)),
     Match.exhaustive,
@@ -882,15 +910,23 @@ const failedProbeOutcomeOf = (core: SupervisorCore, child: ChildInstance, at: Ev
     Match.exhaustive,
   )
 
+const epochedDecision = (child: ChildInstance, epoch: Epoch, decision: SupervisionDecision): SupervisionDecision =>
+  Match.value(child.epoch === epoch).pipe(
+    Match.when(true, () => decision),
+    Match.when(false, () => new Stale({})),
+    Match.exhaustive,
+  )
+
 const namedTimerInRunning = (
   core: SupervisorCore,
   child: ChildInstance,
   kind: TimerKind,
   at: EventTime,
+  epoch: Epoch,
 ): SupervisionDecision =>
   Match.value(kind).pipe(
-    Match.when('start_deadline', () => deadlineInRunning(core, child, at)),
-    Match.when('liveness_tick', () => tickInRunning(core, child, at)),
+    Match.when('start_deadline', () => epochedDecision(child, epoch, deadlineInRunning(core, child, at))),
+    Match.when('liveness_tick', () => epochedDecision(child, epoch, tickInRunning(core, child, at))),
     Match.when('backoff', () => new Stale({})),
     Match.when('cool_down', () => new Stale({})),
     Match.exhaustive,
@@ -936,10 +972,11 @@ const timerInRunning = (
   generation: Generation,
   kind: TimerKind,
   at: EventTime,
+  epoch: Epoch,
 ): SupervisionDecision =>
   Match.value(currentIncarnation(core, childId, generation)).pipe(
     Match.tag('None', () => new Stale({})),
-    Match.tag('Some', (found) => namedTimerInRunning(core, found.value, kind, at)),
+    Match.tag('Some', (found) => namedTimerInRunning(core, found.value, kind, at, epoch)),
     Match.exhaustive,
   )
 
@@ -952,15 +989,30 @@ const fireBackoffOf = (
 ): SupervisionDecision => {
   const start: ChildStart = { childId, generation }
   const remaining = Arr.filter(pending, (plan) => planMatches(childId, generation)(plan) === false)
-  const queued: SupervisorCore = { ...core, awaiting: enqueueStarts(core.awaiting, [start]) }
-  const drained = drainAwaitingOf(queued, at)
-  return Match.value(Arr.length(remaining) === 0).pipe(
-    Match.when(true, () => new StartChildren({ core: drained.core, commands: drained.commands })),
-    Match.when(
-      false,
-      () => new RestartChildren({ core: drained.core, pending: remaining, commands: drained.commands }),
-    ),
-    Match.exhaustive,
+  return Match.value(core.policy.strategy).pipe(
+    Match.when('one_for_one', () => {
+      const commands: SupervisorCommands = commandsIn({
+        starts: [startCommandOf(start)],
+        arms: [deadlineCommandOf(start, at + startTimeoutOf(core, start), 0)],
+      })
+      return Match.value(Arr.length(remaining) === 0).pipe(
+        Match.when(true, () => new StartChildren({ core, commands })),
+        Match.when(false, () => new RestartChildren({ core, pending: remaining, commands })),
+        Match.exhaustive,
+      )
+    }),
+    Match.orElse(() => {
+      const queued: SupervisorCore = { ...core, awaiting: enqueueStarts(core.awaiting, [start]) }
+      const drained = drainAwaitingOf(queued, at)
+      return Match.value(Arr.length(remaining) === 0).pipe(
+        Match.when(true, () => new StartChildren({ core: drained.core, commands: drained.commands })),
+        Match.when(
+          false,
+          () => new RestartChildren({ core: drained.core, pending: remaining, commands: drained.commands }),
+        ),
+        Match.exhaustive,
+      )
+    }),
   )
 }
 
@@ -1020,6 +1072,7 @@ const dynamicInstanceOf = (core: SupervisorCore): { readonly core: SupervisorCor
     childId: start.childId,
     generation: start.generation,
     status: 'starting',
+    epoch: 0,
     consecutiveRestarts: 0,
     probeFailures: 0,
   }
@@ -1035,18 +1088,14 @@ const allocatedDecisionOf = (
   requestId: RequestId,
   at: EventTime,
 ): SupervisionDecision => {
-  const timeoutMillis = Match.value(dynamicKindOf(allocated.core.policy)).pipe(
-    Match.tag('Some', ({ value }) => value.startTimeoutMillis),
-    Match.tag('None', () => UNKNOWN_TIMEOUT_MILLIS),
-    Match.exhaustive,
-  )
+  const queued: SupervisorCore = {
+    ...allocated.core,
+    awaiting: enqueueStarts(allocated.core.awaiting, [allocated.start]),
+  }
+  const drained = drainAwaitingOf(queued, at)
   return new StartChildren({
-    core: allocated.core,
-    commands: commandsIn({
-      starts: [startCommandOf(allocated.start)],
-      arms: [deadlineCommandOf(allocated.start, at + timeoutMillis)],
-      replies: [replyAcceptedOf(requestId, allocated.start)],
-    }),
+    core: drained.core,
+    commands: appendCommands(drained.commands, commandsIn({ replies: [replyAcceptedOf(requestId, allocated.start)] })),
   })
 }
 
@@ -1193,7 +1242,10 @@ const onTimerElapsed = (
   Match.value(state).pipe(
     Match.tag('Running', ({ core }) =>
       Match.value(target).pipe(
-        Match.tag('ChildTimer', (child) => timerInRunning(core, child.childId, child.generation, kind, at)),
+        Match.tag(
+          'ChildTimer',
+          (child) => timerInRunning(core, child.childId, child.generation, kind, at, child.epoch),
+        ),
         Match.tag('SupervisorTimer', () => new Stale({})),
         Match.exhaustive,
       )),
@@ -1317,6 +1369,7 @@ const acquiredOfChild = (core: SupervisorCore, child: ChildInstance, at: EventTi
             deadlineCommandOf(
               { childId: child.childId, generation: child.generation },
               at + startTimeoutOf(core, { childId: child.childId, generation: child.generation }),
+              child.epoch + 1,
             ),
           ],
         }),
@@ -1361,21 +1414,17 @@ const releasedInRunning = (core: SupervisorCore, childId: ChildId, generation: G
     Match.exhaustive,
   )
 
-const holdInOtherPhases = (state: SupervisorState): SupervisionDecision =>
+const coreOfLive = (state: SupervisorState): Option.Option<SupervisorCore> =>
   Match.value(state).pipe(
-    Match.tag('Running', ({ core }) => holdOf(core)),
-    Match.tag('Restarting', ({ core }) => holdOf(core)),
-    Match.tag('CoolingDown', ({ core }) => holdOf(core)),
-    Match.tag('ShuttingDown', ({ core }) => holdOf(core)),
-    Match.tag('Terminated', () => new Stale({})),
-    Match.exhaustive,
+    Match.tag('Terminated', () => Option.none()),
+    Match.orElse((live) => Option.some(live.core)),
   )
 
 const onChildStandby = (state: SupervisorState, childId: ChildId, generation: Generation): SupervisionDecision =>
-  Match.value(state).pipe(
-    Match.tag('Running', ({ core }) => standbyInRunning(core, childId, generation)),
-    Match.orElse(() => holdInOtherPhases(state)),
-  )
+  Option.match(coreOfLive(state), {
+    onNone: () => new Stale({}),
+    onSome: (core) => standbyInRunning(core, childId, generation),
+  })
 
 const onChildAcquired = (
   state: SupervisorState,
@@ -1383,16 +1432,16 @@ const onChildAcquired = (
   generation: Generation,
   at: EventTime,
 ): SupervisionDecision =>
-  Match.value(state).pipe(
-    Match.tag('Running', ({ core }) => acquiredInRunning(core, childId, generation, at)),
-    Match.orElse(() => holdInOtherPhases(state)),
-  )
+  Option.match(coreOfLive(state), {
+    onNone: () => new Stale({}),
+    onSome: (core) => acquiredInRunning(core, childId, generation, at),
+  })
 
 const onChildReleased = (state: SupervisorState, childId: ChildId, generation: Generation): SupervisionDecision =>
-  Match.value(state).pipe(
-    Match.tag('Running', ({ core }) => releasedInRunning(core, childId, generation)),
-    Match.orElse(() => holdInOtherPhases(state)),
-  )
+  Option.match(coreOfLive(state), {
+    onNone: () => new Stale({}),
+    onSome: (core) => releasedInRunning(core, childId, generation),
+  })
 
 const decided = (state: SupervisorState, event: SupervisionEvent): SupervisionDecision =>
   Match.value(event).pipe(

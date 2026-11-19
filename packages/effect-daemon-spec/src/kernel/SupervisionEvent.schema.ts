@@ -1,11 +1,15 @@
 import { Schema } from 'effect'
-import { ChildId, EventTime, Generation, RequestId } from './SupervisionLimits.schema.js'
+import { ChildId, Epoch, EventTime, Generation, RequestId } from './SupervisionLimits.schema.js'
 import { TerminationReason } from './TerminationReport.schema.js'
 
 export const TimerKind = Schema.Literals(['start_deadline', 'backoff', 'liveness_tick', 'cool_down'])
 export type TimerKind = typeof TimerKind.Type
 
-export const ChildTimerTarget = Schema.TaggedStruct('ChildTimer', { childId: ChildId, generation: Generation })
+export const ChildTimerTarget = Schema.TaggedStruct('ChildTimer', {
+  childId: ChildId,
+  generation: Generation,
+  epoch: Epoch,
+})
 export type ChildTimerTarget = typeof ChildTimerTarget.Type
 
 export const SupervisorTimerTarget = Schema.TaggedStruct('SupervisorTimer', {})

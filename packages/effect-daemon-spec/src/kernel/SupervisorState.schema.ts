@@ -3,6 +3,7 @@ import { dual } from 'effect/Function'
 import type { SupervisionDecision } from './interpret-supervision-event.workflow.js'
 import {
   ChildId,
+  Epoch,
   EventTime,
   Generation,
   Ordinal,
@@ -22,6 +23,7 @@ export const ChildInstance = Schema.Struct({
   childId: ChildId,
   generation: Generation,
   status: ChildStatus,
+  epoch: Epoch,
   consecutiveRestarts: RestartCount,
   probeFailures: ProbeFailures,
 })
@@ -84,6 +86,7 @@ export const initialStateOf = (policy: SupervisionPolicy): SupervisorCore => ({
     childId: declaration.childId,
     generation: 0,
     status: 'starting',
+    epoch: 0,
     consecutiveRestarts: 0,
     probeFailures: 0,
   })),

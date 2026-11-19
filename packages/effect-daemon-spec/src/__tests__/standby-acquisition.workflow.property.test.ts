@@ -1,6 +1,7 @@
 import { it } from '@systemfsoftware/vitest'
 import { Array as Arr, Match, Result } from 'effect'
 import { absurd } from 'effect/Function'
+import { evolveSupervisor, SupervisionEvolution } from '../kernel/evolve-supervisor.workflow.js'
 import {
   interpretSupervisionEvent,
   type SupervisionDecision,
@@ -12,7 +13,7 @@ import type { SupervisorArm } from '../kernel/SupervisorCommand.schema.js'
 import { SupervisionPolicy } from '../kernel/SupervisorPolicy.schema.js'
 import type { RestartType } from '../kernel/SupervisorPolicy.schema.js'
 import type { ChildInstance, SupervisorCore } from '../kernel/SupervisorState.schema.js'
-import { Running } from '../kernel/SupervisorState.schema.js'
+import { Restarting, Running } from '../kernel/SupervisorState.schema.js'
 import type { SupervisorState } from '../kernel/SupervisorState.schema.js'
 import type { TerminationReason } from '../kernel/TerminationReport.schema.js'
 
@@ -23,12 +24,13 @@ const START_TIMEOUT_MILLIS = 50
 const LIVENESS_TICK_MILLIS = 10
 
 const policyWith = (
+  strategy: 'one_for_one' | 'rest_for_one' | 'one_for_all',
   childDeclarations: ReadonlyArray<{
     readonly childId: string
     readonly restartType: RestartType
   }>,
 ): SupervisionPolicy => ({
-  strategy: 'rest_for_one',
+  strategy,
   intensity: 8,
   periodMillis: PERIOD_MILLIS,
   autoShutdown: 'never',
@@ -46,10 +48,16 @@ const policyWith = (
   })),
 })
 
-const childOf = (childId: string, generation: Generation, status: ChildInstance['status']): ChildInstance => ({
+const childOf = (
+  childId: string,
+  generation: Generation,
+  status: ChildInstance['status'],
+  epoch = 0,
+): ChildInstance => ({
   childId,
   generation,
   status,
+  epoch,
   consecutiveRestarts: 0,
   probeFailures: 0,
 })
@@ -71,11 +79,16 @@ const decidedOf = (interpret: Interpret, step: SupervisionStep): SupervisionDeci
 const stepOf = (state: SupervisorState, event: SupervisionEvent): SupervisionStep =>
   new SupervisionStep({ state, event })
 
-const startDeadlineTimerOf = (childId: string, generation: Generation, at: EventTime): SupervisionEvent => ({
+const startDeadlineTimerOf = (
+  childId: string,
+  generation: Generation,
+  epoch: number,
+  at: EventTime,
+): SupervisionEvent => ({
   _tag: 'TimerElapsed',
   at,
   kind: 'start_deadline',
-  target: { _tag: 'ChildTimer', childId, generation },
+  target: { _tag: 'ChildTimer', childId, generation, epoch },
 })
 
 const acquiredEventOf = (childId: string, generation: Generation, at: EventTime): SupervisionEvent => ({
@@ -106,6 +119,11 @@ const terminatedEventOf = (
   reason: TerminationReason,
 ): SupervisionEvent => ({ _tag: 'ChildTerminated', at, childId, generation, reason })
 
+const abnormalOf = (cause: string): TerminationReason => ({
+  _tag: 'Abnormal',
+  report: { _tag: 'CauseReport', cause },
+})
+
 const isStale = (decision: SupervisionDecision): boolean =>
   Match.value(decision).pipe(
     Match.tag('Stale', () => true),
@@ -126,6 +144,20 @@ const statusOf = (decision: SupervisionDecision, childId: string): string | null
     ),
   )
 
+const epochOf = (decision: SupervisionDecision, childId: string): number | null =>
+  Match.value(decision).pipe(
+    Match.tag('Continue', ({ core }) =>
+      Match.value(Arr.findFirst(core.children, (child) =>
+        child.childId === childId)).pipe(
+          Match.tag('Some', ({ value }) => value.epoch),
+          Match.tag('None', () => null),
+          Match.exhaustive,
+        )),
+    Match.orElse(() =>
+      null
+    ),
+  )
+
 const startedIdsOf = (decision: SupervisionDecision): ReadonlyArray<string> =>
   Match.value(decision).pipe(
     Match.tag('Continue', ({ commands }) => Arr.map(commands.starts, (start) => start.childId)),
@@ -133,18 +165,23 @@ const startedIdsOf = (decision: SupervisionDecision): ReadonlyArray<string> =>
     Match.orElse((): ReadonlyArray<string> => []),
   )
 
-const isStartDeadlineFor = (arm: SupervisorArm, childId: string, at: EventTime): boolean =>
+const isStartDeadlineFor = (arm: SupervisorArm, childId: string, epoch: number, at: EventTime): boolean =>
   Match.value(arm).pipe(
-    Match.tag('ArmChildTimer', (timer) =>
-      timer.kind === 'start_deadline' && timer.childId === childId && timer.deadline === at + START_TIMEOUT_MILLIS),
-    Match.orElse(() =>
-      false
+    Match.tag(
+      'ArmChildTimer',
+      (timer) =>
+        timer.kind === 'start_deadline' && timer.childId === childId && timer.epoch === epoch &&
+        timer.deadline === at + START_TIMEOUT_MILLIS,
     ),
+    Match.orElse(() => false),
   )
 
-const armedDeadlineFor = (decision: SupervisionDecision, childId: string, at: EventTime): boolean =>
+const armedDeadlineFor = (decision: SupervisionDecision, childId: string, epoch: number, at: EventTime): boolean =>
   Match.value(decision).pipe(
-    Match.tag('Continue', ({ commands }) => Arr.some(commands.arms, (arm) => isStartDeadlineFor(arm, childId, at))),
+    Match.tag(
+      'Continue',
+      ({ commands }) => Arr.some(commands.arms, (arm) => isStartDeadlineFor(arm, childId, epoch, at)),
+    ),
     Match.orElse(() => false),
   )
 
@@ -152,20 +189,21 @@ it.prop(
   '∀s_StandbyDeadline_=Stale',
   { of: [EventTime, Generation], subject: interpretSupervisionEvent },
   (subject, [at, generation]) => {
-    const policy = policyWith([{ childId: 'c0', restartType: 'permanent' }])
+    const policy = policyWith('rest_for_one', [{ childId: 'c0', restartType: 'permanent' }])
     const state = runningOf(coreWith(policy, [childOf('c0', generation, 'standby')], []))
-    return isStale(decidedOf(subject, stepOf(state, startDeadlineTimerOf('c0', generation, at))))
+    return isStale(decidedOf(subject, stepOf(state, startDeadlineTimerOf('c0', generation, 0, at))))
   },
 )
 
 it.prop(
-  '∀a_Acquired_=StartingWithDeadline',
+  '∀a_Acquired_=StartingWithEpochDeadline',
   { of: [EventTime, Generation], subject: interpretSupervisionEvent },
   (subject, [at, generation]) => {
-    const policy = policyWith([{ childId: 'c0', restartType: 'permanent' }])
+    const policy = policyWith('rest_for_one', [{ childId: 'c0', restartType: 'permanent' }])
     const state = runningOf(coreWith(policy, [childOf('c0', generation, 'standby')], []))
     const decision = decidedOf(subject, stepOf(state, acquiredEventOf('c0', generation, at)))
-    return statusOf(decision, 'c0') === 'starting' && armedDeadlineFor(decision, 'c0', at)
+    return statusOf(decision, 'c0') === 'starting' && epochOf(decision, 'c0') === 1 &&
+      armedDeadlineFor(decision, 'c0', 1, at)
   },
 )
 
@@ -173,7 +211,7 @@ it.prop(
   '∀r_Released_=StandbyWithoutTermination',
   { of: [EventTime, Generation], subject: interpretSupervisionEvent },
   (subject, [at, generation]) => {
-    const policy = policyWith([{ childId: 'c0', restartType: 'permanent' }])
+    const policy = policyWith('rest_for_one', [{ childId: 'c0', restartType: 'permanent' }])
     const state = runningOf(coreWith(policy, [childOf('c0', generation, 'ready')], []))
     const decision = decidedOf(subject, stepOf(state, releasedEventOf('c0', generation, at)))
     return Match.value(decision).pipe(
@@ -189,28 +227,97 @@ it.prop(
 )
 
 it.prop(
-  '∀q_ReadyDrainsAwaiting_=StartNext',
+  '∀r_ReadyWhileStandby_=Held',
   { of: [EventTime, Generation], subject: interpretSupervisionEvent },
   (subject, [at, generation]) => {
-    const policy = policyWith([
-      { childId: 'c0', restartType: 'permanent' },
-      { childId: 'c1', restartType: 'permanent' },
-    ])
-    const state = runningOf(coreWith(policy, [
-      childOf('c0', generation, 'standby'),
-      childOf('c1', generation, 'starting'),
-    ], [{ childId: 'c1', generation }]))
+    const policy = policyWith('rest_for_one', [{ childId: 'c0', restartType: 'permanent' }])
+    const state = runningOf(coreWith(policy, [childOf('c0', generation, 'standby')], []))
     const decision = decidedOf(subject, stepOf(state, readyEventOf('c0', generation, at)))
-    return statusOf(decision, 'c0') === 'ready' && Arr.contains(startedIdsOf(decision), 'c1') &&
-      armedDeadlineFor(decision, 'c1', at)
+    return statusOf(decision, 'c0') === 'standby' && isStale(decision) === false
   },
 )
 
 it.prop(
-  '∀q_StandbyBlocksAwaiting_=NoStart',
+  '∀p_AcquiredInRestarting_=KeepsPending',
   { of: [EventTime, Generation], subject: interpretSupervisionEvent },
   (subject, [at, generation]) => {
-    const policy = policyWith([
+    const policy = policyWith('one_for_all', [
+      { childId: 'c0', restartType: 'permanent' },
+      { childId: 'c1', restartType: 'permanent' },
+    ])
+    const core = coreWith(policy, [
+      childOf('c0', generation, 'standby'),
+      childOf('c1', generation, 'starting'),
+    ], [])
+    const state = new Restarting({ core, pending: [{ childId: 'c1', generation: generation + 1 }] })
+    const decision = decidedOf(subject, stepOf(state, acquiredEventOf('c0', generation, at)))
+    return Result.match(
+      evolveSupervisor(new SupervisionEvolution({ state, decision })),
+      {
+        onFailure: () => false,
+        onSuccess: (evolved) =>
+          Match.value(evolved).pipe(
+            Match.tag('Restarting', (restarting) =>
+              restarting.pending.length === 1 &&
+              Match.value(Arr.findFirst(restarting.core.children, (child) => child.childId === 'c0')).pipe(
+                Match.tag('Some', ({ value }) => value.status === 'starting' && value.epoch === 1),
+                Match.tag('None', () => false),
+                Match.exhaustive,
+              )),
+            Match.orElse(() => false),
+          ),
+      },
+    )
+  },
+)
+
+it.prop(
+  '∀e_StaleEpochDeadline_=Stale',
+  { of: [EventTime, Generation], subject: interpretSupervisionEvent },
+  (subject, [at, generation]) => {
+    const policy = policyWith('one_for_one', [{ childId: 'c0', restartType: 'permanent' }])
+    const state = runningOf(coreWith(policy, [childOf('c0', generation, 'starting', 2)], []))
+    return isStale(decidedOf(subject, stepOf(state, startDeadlineTimerOf('c0', generation, 1, at))))
+  },
+)
+
+it.prop(
+  '∀e_CurrentEpochDeadline_=Missed',
+  { of: [EventTime, Generation], subject: interpretSupervisionEvent },
+  (subject, [at, generation]) => {
+    const policy = policyWith('one_for_one', [{ childId: 'c0', restartType: 'permanent' }])
+    const state = runningOf(coreWith(policy, [childOf('c0', generation, 'starting', 2)], []))
+    const decision = decidedOf(subject, stepOf(state, startDeadlineTimerOf('c0', generation, 2, at)))
+    return isStale(decision) === false &&
+      Arr.some(startedIdsOf(decision), (childId) => childId === 'c0')
+  },
+)
+
+it.prop(
+  '∀o_OneForOneRestart_=Ungated',
+  { of: [EventTime, Generation], subject: interpretSupervisionEvent },
+  (subject, [at, generation]) => {
+    const policy = policyWith('one_for_one', [
+      { childId: 'c0', restartType: 'permanent' },
+      { childId: 'c1', restartType: 'permanent' },
+    ])
+    const state = runningOf(coreWith(policy, [
+      childOf('c0', generation, 'standby'),
+      childOf('c1', generation, 'ready'),
+    ], []))
+    const decision = decidedOf(
+      subject,
+      stepOf(state, terminatedEventOf('c1', generation, at, abnormalOf('boom'))),
+    )
+    return Arr.contains(startedIdsOf(decision), 'c1')
+  },
+)
+
+it.prop(
+  '∀q_AcquisitionBlocksAwaiting_=NoStart',
+  { of: [EventTime, Generation], subject: interpretSupervisionEvent },
+  (subject, [at, generation]) => {
+    const policy = policyWith('rest_for_one', [
       { childId: 'c0', restartType: 'permanent' },
       { childId: 'c1', restartType: 'permanent' },
     ])
@@ -218,8 +325,26 @@ it.prop(
       childOf('c0', generation, 'standby'),
       childOf('c1', generation, 'starting'),
     ], [{ childId: 'c1', generation }]))
-    const decision = decidedOf(subject, stepOf(state, acquiredEventOf('c0', generation, at)))
-    return statusOf(decision, 'c0') === 'starting' && Arr.contains(startedIdsOf(decision), 'c1') === false
+    const acquired = decidedOf(subject, stepOf(state, acquiredEventOf('c0', generation, at)))
+    return statusOf(acquired, 'c0') === 'starting' && Arr.contains(startedIdsOf(acquired), 'c1') === false
+  },
+)
+
+it.prop(
+  '∀q_ReadinessDrainsAwaiting_=StartNext',
+  { of: [EventTime, Generation], subject: interpretSupervisionEvent },
+  (subject, [at, generation]) => {
+    const policy = policyWith('rest_for_one', [
+      { childId: 'c0', restartType: 'permanent' },
+      { childId: 'c1', restartType: 'permanent' },
+    ])
+    const state = runningOf(coreWith(policy, [
+      childOf('c0', generation, 'starting', 1),
+      childOf('c1', generation, 'starting'),
+    ], [{ childId: 'c1', generation }]))
+    const readied = decidedOf(subject, stepOf(state, readyEventOf('c0', generation, at)))
+    return statusOf(readied, 'c0') === 'ready' && Arr.contains(startedIdsOf(readied), 'c1') &&
+      armedDeadlineFor(readied, 'c1', 0, at)
   },
 )
 
@@ -227,7 +352,7 @@ it.prop(
   '∀q_RemovedPredecessor_=UnblocksAwaiting',
   { of: [EventTime, Generation], subject: interpretSupervisionEvent },
   (subject, [at, generation]) => {
-    const policy = policyWith([
+    const policy = policyWith('rest_for_one', [
       { childId: 'c0', restartType: 'temporary' },
       { childId: 'c1', restartType: 'permanent' },
     ])
@@ -240,5 +365,25 @@ it.prop(
       stepOf(state, terminatedEventOf('c0', generation, at, { _tag: 'Normal' })),
     )
     return Arr.contains(startedIdsOf(terminated), 'c1')
+  },
+)
+
+it.prop(
+  '∀d_DeadEntry_=PrunedOnDrain',
+  { of: [EventTime, Generation], subject: interpretSupervisionEvent },
+  (subject, [at, generation]) => {
+    const policy = policyWith('rest_for_one', [
+      { childId: 'c0', restartType: 'permanent' },
+      { childId: 'c1', restartType: 'permanent' },
+    ])
+    const state = runningOf(coreWith(policy, [
+      childOf('c0', generation, 'starting'),
+      childOf('c1', generation, 'starting'),
+    ], [{ childId: 'gone', generation: 5 }, { childId: 'c1', generation }]))
+    const readied = decidedOf(subject, stepOf(state, readyEventOf('c0', generation, at)))
+    return Match.value(readied).pipe(
+      Match.tag('Continue', ({ core }) => Arr.contains(startedIdsOf(readied), 'c1') && core.awaiting.length === 0),
+      Match.orElse(() => false),
+    )
   },
 )

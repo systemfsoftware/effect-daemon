@@ -40,6 +40,9 @@ export type Deadline = typeof Deadline.Type
 export const Generation = NonNegativeSafeInt.pipe(Schema.check(generatedBetween(0, 1_024)))
 export type Generation = typeof Generation.Type
 
+export const Epoch = NonNegativeSafeInt.pipe(Schema.check(generatedBetween(0, 1_024)))
+export type Epoch = typeof Epoch.Type
+
 /** OTP intensity (R3): any non-negative integer restarts per period. Generation stays small because laws fold intensity+1 restarts. */
 export const Intensity = NonNegativeSafeInt.pipe(Schema.check(generatedBetween(0, 8)))
 export type Intensity = typeof Intensity.Type

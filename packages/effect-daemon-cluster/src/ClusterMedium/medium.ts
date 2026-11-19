@@ -14,7 +14,7 @@ import {
   Scope,
   Stream,
 } from 'effect'
-import { EntityId, Sharding } from 'effect/cluster'
+import { Sharding } from 'effect/cluster'
 import { absurd } from 'effect/Function'
 import type { ClusterProgram, ClusterProgramRequirements, EntityChild, SingletonChild } from './ClusterProgram.js'
 
@@ -36,7 +36,16 @@ interface ClusterStarted extends Supervisor.Medium.Started {
   readonly ended: Deferred.Deferred<Supervisor.Medium.TerminationReason>
   readonly stopping: Ref.Ref<boolean>
   readonly probe: Effect.Effect<boolean, never, ClusterMediumRequirement>
+  readonly activityQueue?: Queue.Queue<Supervisor.Medium.MediumActivity> | undefined
 }
+
+const activityExtras = (
+  activity?: Supervisor.Medium.StartedActivity,
+  activityQueue?: Queue.Queue<Supervisor.Medium.MediumActivity>,
+): {
+  readonly activity?: Supervisor.Medium.StartedActivity
+  readonly activityQueue?: Queue.Queue<Supervisor.Medium.MediumActivity> | undefined
+} => activity === undefined ? {} : { activity, activityQueue }
 
 const clusterStarted = (
   ready: Effect.Effect<void>,
@@ -45,6 +54,7 @@ const clusterStarted = (
   stopping: Ref.Ref<boolean>,
   probe: Effect.Effect<boolean, never, ClusterMediumRequirement>,
   activity?: Supervisor.Medium.StartedActivity,
+  activityQueue?: Queue.Queue<Supervisor.Medium.MediumActivity>,
 ): ClusterStarted => ({
   ...Supervisor.Medium.started(ready),
   [ClusterStartedTypeId]: ClusterStartedTypeId,
@@ -52,7 +62,7 @@ const clusterStarted = (
   ended,
   stopping,
   probe,
-  ...(activity === undefined ? {} : { activity }),
+  ...activityExtras(activity, activityQueue),
 })
 
 const isClusterStarted = (evidence: Supervisor.Medium.Started): evidence is ClusterStarted =>
@@ -94,22 +104,20 @@ const reportedOnExit = (
       lostItsShard(stopped, exit) ? Effect.void : Effect.asVoid(Deferred.succeed(ended, terminationOf(stopped, exit))),
   )
 
-const ownsSingleton = (sharding: Sharding.Sharding['Service'], name: string, shardGroup: string | undefined) =>
-  sharding.hasShardId(sharding.getShardId(EntityId.make(name), shardGroup ?? 'default'))
-
 const announceAcquire = (changes: Queue.Queue<Supervisor.Medium.MediumActivity>): Effect.Effect<void> =>
   Queue.offer(changes, { _tag: 'Acquired' }).pipe(Effect.asVoid)
-
-const announcesAcquire = (initiallyStandby: boolean, seen: number): boolean => initiallyStandby || seen > 0
 
 const singletonReady = (
   signalled: Deferred.Deferred<void>,
   changes: Queue.Queue<Supervisor.Medium.MediumActivity>,
 ): Effect.Effect<void> =>
-  Effect.flatMap(Deferred.isDone(signalled), (alreadySignalled) =>
-    alreadySignalled
-      ? Queue.offer(changes, { _tag: 'Ready' }).pipe(Effect.asVoid)
-      : Effect.asVoid(Deferred.succeed(signalled, void 0)))
+  Effect.flatMap(
+    Deferred.isDone(signalled),
+    (alreadySignalled) => alreadySignalled ? Effect.void : Effect.asVoid(Deferred.succeed(signalled, void 0)),
+  ).pipe(
+    Effect.andThen(Queue.offer(changes, { _tag: 'Ready' })),
+    Effect.asVoid,
+  )
 
 const singletonRun = (
   program: SingletonChild<ClusterMediumRequirement>,
@@ -117,14 +125,9 @@ const singletonRun = (
   ended: Deferred.Deferred<Supervisor.Medium.TerminationReason>,
   stopping: Ref.Ref<boolean>,
   changes: Queue.Queue<Supervisor.Medium.MediumActivity>,
-  initiallyStandby: boolean,
-  runs: Ref.Ref<number>,
 ): Effect.Effect<void, never, ClusterMediumRequirement> =>
   Effect.gen(function*() {
-    const seen = yield* Ref.getAndUpdate(runs, (count) => count + 1)
-    if (announcesAcquire(initiallyStandby, seen)) {
-      yield* announceAcquire(changes)
-    }
+    yield* announceAcquire(changes)
     yield* program.run(singletonReady(signalled, changes))
   }).pipe(
     Effect.onExit((exit) =>
@@ -147,9 +150,7 @@ const startSingleton = (
     const stopping = yield* Ref.make(false)
     const sharding = yield* Sharding.Sharding
     const changes = yield* Queue.unbounded<Supervisor.Medium.MediumActivity>()
-    const runs = yield* Ref.make(0)
-    const initiallyStandby = ownsSingleton(sharding, program.name, shardGroup) === false
-    const run = singletonRun(program, signalled, ended, stopping, changes, initiallyStandby, runs)
+    const run = singletonRun(program, signalled, ended, stopping, changes)
     yield* sharding.registerSingleton(program.name, run, { shardGroup }).pipe(
       Effect.provideService(Scope.Scope, registration),
     )
@@ -160,7 +161,8 @@ const startSingleton = (
       ended,
       stopping,
       probe,
-      { initiallyStandby, changes: Stream.fromQueue(changes) },
+      { initiallyStandby: true, changes: Stream.fromQueue(changes) },
+      changes,
     )
   })
 
@@ -213,6 +215,9 @@ const probeOf = (
     onSome: (self) => self.probe,
   })
 
+const shutdownActivityOf = (self: ClusterStarted): Effect.Effect<void> =>
+  self.activityQueue === undefined ? Effect.void : Queue.shutdown(self.activityQueue).pipe(Effect.ignore)
+
 const stopOf = (
   evidence: Supervisor.Medium.Started,
 ): Effect.Effect<Supervisor.Medium.Stopped, never, ClusterMediumRequirement> =>
@@ -221,6 +226,7 @@ const stopOf = (
     onSome: (self) =>
       Ref.set(self.stopping, true).pipe(
         Effect.andThen(Scope.close(self.registration, Exit.void)),
+        Effect.andThen(shutdownActivityOf(self)),
         Effect.andThen(Deferred.succeed(self.ended, shutdownTermination)),
         Effect.as(Supervisor.Medium.stopped),
       ),

@@ -86,6 +86,7 @@ const childOf = (childId: string, generation: number, status: ChildStatus): Chil
   childId,
   generation,
   status,
+  epoch: 0,
   consecutiveRestarts: 0,
   probeFailures: 0,
 })
@@ -139,7 +140,7 @@ const childTimerEvent = (kind: TimerKind, childId: string, generation: number, a
   _tag: 'TimerElapsed',
   at,
   kind,
-  target: { _tag: 'ChildTimer', childId, generation },
+  target: { _tag: 'ChildTimer', childId, generation, epoch: 0 },
 })
 
 const supervisorTimerEvent = (kind: TimerKind, at: EventTime): SupervisionEvent => ({

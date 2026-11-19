@@ -1,5 +1,5 @@
 import type { Supervisor } from '@systemfsoftware/effect-daemon-spec'
-import { Array as Arr, Match } from 'effect'
+import { Array as Arr, Match, Option } from 'effect'
 import type {
   ChildRef,
   CommandKind,
@@ -68,45 +68,45 @@ const timerChildOf = (target: TimerTarget): ChildRef | null =>
     Match.exhaustive,
   )
 
-const eventOf = (event: Event): ObservedEvent =>
+const observedSome = (
+  kind: EventKind,
+  child: ChildRef | null,
+  reason: ReasonKind | null,
+): Option.Option<ObservedEvent> => Option.some(observedEvent(kind, child, reason))
+
+const eventOf = (event: Event): Option.Option<ObservedEvent> =>
   Match.value(event).pipe(
-    Match.tag('SupervisorStarted', () => observedEvent('SupervisorStarted', null, null)),
+    Match.tag('SupervisorStarted', () => observedSome('SupervisorStarted', null, null)),
     Match.tag('ChildStarted', (started) =>
-      observedEvent('ChildStarted', childRef(started.childId, started.generation), null)),
+      observedSome('ChildStarted', childRef(started.childId, started.generation), null)),
     Match.tag('ChildReady', (ready) =>
-      observedEvent('ChildReady', childRef(ready.childId, ready.generation), null)),
-    Match.tag('ChildStandby', (standby) =>
-      observedEvent('ChildStandby', childRef(standby.childId, standby.generation), null)),
-    Match.tag('ChildAcquired', (acquired) =>
-      observedEvent('ChildAcquired', childRef(acquired.childId, acquired.generation), null)),
-    Match.tag('ChildReleased', (released) =>
-      observedEvent('ChildReleased', childRef(released.childId, released.generation), null)),
+      observedSome('ChildReady', childRef(ready.childId, ready.generation), null)),
+    Match.tag('ChildStandby', () => Option.none()),
+    Match.tag('ChildAcquired', () => Option.none()),
+    Match.tag('ChildReleased', () => Option.none()),
     Match.tag(
       'ChildTerminated',
       (terminated) =>
-        observedEvent(
+        observedSome(
           'ChildTerminated',
           childRef(terminated.childId, terminated.generation),
           reasonKindOf(terminated.reason),
         ),
     ),
     Match.tag('ChildStopped', (stopped) =>
-      observedEvent('ChildStopped', childRef(stopped.childId, stopped.generation), null)),
+      observedSome('ChildStopped', childRef(stopped.childId, stopped.generation), null)),
     Match.tag('ProbeResult', (probe) =>
-      observedEvent('ProbeResult', childRef(probe.childId, probe.generation), null)),
+      observedSome('ProbeResult', childRef(probe.childId, probe.generation), null)),
     Match.tag('TimerElapsed', (timer) =>
-      observedEvent('TimerElapsed', timerChildOf(timer.target), null)),
-    Match.tag('DynamicStartRequested', () =>
-      observedEvent('DynamicStartRequested', null, null)),
+      observedSome('TimerElapsed', timerChildOf(timer.target), null)),
+    Match.tag('DynamicStartRequested', () => observedSome('DynamicStartRequested', null, null)),
     Match.tag(
       'DynamicStopRequested',
-      (stopping) =>
-        observedEvent('DynamicStopRequested', childRef(stopping.childId, stopping.generation), null),
+      (stopping) => observedSome('DynamicStopRequested', childRef(stopping.childId, stopping.generation), null),
     ),
     Match.tag(
       'ShutdownRequested',
-      (shutdown) =>
-        observedEvent('ShutdownRequested', null, reasonKindOf(shutdown.reason)),
+      (shutdown) => observedSome('ShutdownRequested', null, reasonKindOf(shutdown.reason)),
     ),
     Match.exhaustive,
   )
@@ -146,11 +146,12 @@ const decisionOf = (decision: Decision): ObservedDecision =>
     Match.exhaustive,
   )
 
-const stepOf = (entry: TraceEntry): ObservedStep => ({
-  event: eventOf(entry.event),
-  decision: decisionOf(entry.decision),
-})
+const stepOf = (entry: TraceEntry): Option.Option<ObservedStep> =>
+  Option.map(eventOf(entry.event), (event) => ({ event, decision: decisionOf(entry.decision) }))
+
+const isIgnoredStep = (step: ObservedStep): boolean =>
+  step.event.kind === 'TimerElapsed' && step.decision.kind === 'Stale'
 
 /** Reduces a supervisor's kernel trace to the steps a pairwise comparison reads. */
 export const observedStepsOf = (entries: ReadonlyArray<TraceEntry>): ReadonlyArray<ObservedStep> =>
-  Arr.map(entries, stepOf)
+  Arr.filter(Arr.flatMap(entries, (entry) => Option.toArray(stepOf(entry))), (step) => isIgnoredStep(step) === false)
