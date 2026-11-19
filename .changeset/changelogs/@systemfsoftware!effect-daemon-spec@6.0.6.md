@@ -1,0 +1,3 @@
+# @systemfsoftware/effect-daemon-spec@6.0.6
+
+Standby singletons no longer report ready before shard acquisition. A cluster singleton whose shard another runner owns now registers as a `standby`: it is not ready, children declared after it do not start until it owns its shard and its run signals ready, and `startTimeoutMillis` is measured from shard acquisition rather than registration. Losing the shard is a handoff, not a failure: the child returns to standby without a termination, restart, or intensity charge. The supervisor starts children in declared order, each gated on the readiness of the ones before it, and status and the trace expose `standby`, `acquired`, `ready` and `released` transitions for every child.
