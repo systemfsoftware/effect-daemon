@@ -12,6 +12,7 @@ import {
   Ref,
   Schema,
   Scope,
+  Stream,
 } from 'effect'
 import type { SupervisionEvent, TimerKind } from '../kernel/SupervisionEvent.schema.js'
 import type { ChildId, Generation } from '../kernel/SupervisionLimits.schema.js'
@@ -30,7 +31,7 @@ import type { IntensityExceededExit } from '../kernel/TerminationReport.schema.j
 import type { BoundChild, Incarnation } from './bound-child.js'
 import { outcomeOf } from './DynamicOutcome.schema.js'
 import * as FiberMedium from './FiberMedium.js'
-import type { Started } from './Medium.js'
+import type { Started, StartedActivity } from './Medium.js'
 import type { RunningSupervisor } from './running-supervisor.handle.js'
 import {
   boundChildrenOf,
@@ -64,6 +65,27 @@ const stampedNow = (
 
 const startedEventOf = (childId: ChildId, generation: Generation): SupervisionEvent => ({
   _tag: 'ChildStarted',
+  at: 0,
+  childId,
+  generation,
+})
+
+const standbyEventOf = (childId: ChildId, generation: Generation): SupervisionEvent => ({
+  _tag: 'ChildStandby',
+  at: 0,
+  childId,
+  generation,
+})
+
+const acquiredEventOf = (childId: ChildId, generation: Generation): SupervisionEvent => ({
+  _tag: 'ChildAcquired',
+  at: 0,
+  childId,
+  generation,
+})
+
+const releasedEventOf = (childId: ChildId, generation: Generation): SupervisionEvent => ({
+  _tag: 'ChildReleased',
   at: 0,
   childId,
   generation,
@@ -145,6 +167,33 @@ const watchReadiness = (
     ),
   )
 
+const watchActivity = (
+  handle: RunningSupervisor,
+  evidence: Started,
+  childId: ChildId,
+  generation: Generation,
+): Effect.Effect<void, never, Scope.Scope> =>
+  evidence.activity === undefined ? Effect.void : forkActivityWatch(handle, evidence.activity, childId, generation)
+
+const forkActivityWatch = (
+  handle: RunningSupervisor,
+  activity: StartedActivity,
+  childId: ChildId,
+  generation: Generation,
+): Effect.Effect<void, never, Scope.Scope> =>
+  Effect.asVoid(
+    Effect.forkIn(
+      Stream.runForEach(activity.changes, (change) =>
+        Match.value(change).pipe(
+          Match.tag('Acquired', () => stampedNow(handle, acquiredEventOf(childId, generation))),
+          Match.tag('Ready', () => stampedNow(handle, readyEventOf(childId, generation))),
+          Match.tag('Released', () => stampedNow(handle, releasedEventOf(childId, generation))),
+          Match.exhaustive,
+        )),
+      ownerScopeOf(handle),
+    ),
+  )
+
 const watchReport = (
   handle: RunningSupervisor,
   child: BoundChild,
@@ -187,8 +236,14 @@ const executeStart = (
           Effect.andThen(
             stampedNow(acquired.handle, startedEventOf(command.childId, command.generation)),
             Effect.andThen(
-              watchReadiness(acquired.handle, incarnation.evidence, command.childId, command.generation),
-              watchReport(acquired.handle, child, incarnation, command.childId, command.generation),
+              announceStandby(acquired.handle, incarnation.evidence, command.childId, command.generation),
+              Effect.andThen(
+                watchReadiness(acquired.handle, incarnation.evidence, command.childId, command.generation),
+                Effect.andThen(
+                  watchActivity(acquired.handle, incarnation.evidence, command.childId, command.generation),
+                  watchReport(acquired.handle, child, incarnation, command.childId, command.generation),
+                ),
+              ),
             ),
           ),
         ),
@@ -199,6 +254,21 @@ const executeStart = (
         ),
     })
   })
+
+const initiallyStandbyOf = (evidence: Started): boolean => {
+  const activity = evidence.activity
+  return activity === undefined ? false : activity.initiallyStandby
+}
+
+const announceStandby = (
+  handle: RunningSupervisor,
+  evidence: Started,
+  childId: ChildId,
+  generation: Generation,
+): Effect.Effect<void> =>
+  initiallyStandbyOf(evidence)
+    ? stampedNow(handle, standbyEventOf(childId, generation))
+    : Effect.void
 
 /**
  * Moves each answered request's pending child: an accepted start binds it to the

@@ -56,6 +56,8 @@ Use `app.scoped` instead of `app.layer` to get the running supervisor handle ins
 
 `Supervisor.intensity(n, periodMillis)` allows at most `n` restarts within `periodMillis`. The default is OTP's: one restart in five seconds. One more restart than that stops every child and terminates the supervisor; whoever is waiting on it observes a give-up (see [Observing a running supervisor](#observing-a-running-supervisor)).
 
+Children start in declared order, and a later child starts only once the children before it are ready (or have exited): a dependent never starts against an uninitialized sibling. A child that must wait for a resource before its real startup — a cluster medium singleton waiting for its shard, say — registers as a `standby` instead of reporting ready, and its start timeout is measured from when the resource arrives, not from registration.
+
 ## Children
 
 `Supervisor.ChildSpecs.make(id, program, options)` declares a child. Every option is optional; the first three default as OTP does.

@@ -94,7 +94,7 @@ const coreWith = (
   policy: SupervisionPolicy,
   children: ReadonlyArray<ChildInstance>,
   restartStamps: ReadonlyArray<number>,
-): SupervisorCore => ({ policy, children, restartStamps, nextOrdinal: 0 })
+): SupervisorCore => ({ policy, children, restartStamps, nextOrdinal: 0, awaiting: [] })
 
 const runningOf = (core: SupervisorCore): SupervisorState => new Running({ core })
 
@@ -404,6 +404,8 @@ const textOf = (items: ReadonlyArray<string | number>): ReadonlyArray<string> =>
 const idSeqOf = (children: ReadonlyArray<ChildInstance>): ReadonlyArray<string> =>
   Arr.map(children, (child) => child.childId)
 
+const awaitingIdsOf = (core: SupervisorCore): ReadonlyArray<string> => Arr.map(core.awaiting, (start) => start.childId)
+
 const labelOf = (child: ChildInstance): string => `${child.childId}:${child.generation}:${child.status}`
 
 const startIdsFromDecision = (decision: SupervisionDecision): ReadonlyArray<string> =>
@@ -492,7 +494,8 @@ it.prop(
             Match.value(coreOf(decision)).pipe(
               Match.tag('Some', ({ value }) =>
                 sameSeq(stopIdsOf(commandsOf(decision)), Arr.reverse(groupIds)) &&
-                sameSeq(startIdsOf(commandsOf(decision)), comingIds) &&
+                sameSeq(startIdsOf(commandsOf(decision)), Arr.take(comingIds, 1)) &&
+                sameSeq(awaitingIdsOf(value), Arr.drop(comingIds, 1)) &&
                 sameSeq(textOf(value.restartStamps), textOf([at])) &&
                 sameSeq(
                   Arr.map(
@@ -643,7 +646,12 @@ it.prop(
 
     return isRestartFamily(decision) && stamped &&
       Arr.length(stopIdsOf(commandsOf(decision))) === 3 &&
-      Arr.length(startIdsOf(commandsOf(decision))) === 3
+      sameSeq(startIdsOf(commandsOf(decision)), ['c0']) &&
+      Match.value(coreOf(decision)).pipe(
+        Match.tag('Some', ({ value }) => sameSeq(awaitingIdsOf(value), ['c1', 'c2'])),
+        Match.tag('None', () => false),
+        Match.exhaustive,
+      )
   },
 )
 
@@ -1060,7 +1068,10 @@ it.prop(
       strategy: 'one_for_one',
       childDeclarations: [declaredChild(childId, 'permanent', false)],
     })
-    const state = new Restarting({ core: coreWith(policy, [], []), pending: [{ childId, generation: 1 }] })
+    const state = new Restarting({
+      core: coreWith(policy, [childOf(childId, 1, 'starting')], []),
+      pending: [{ childId, generation: 1 }],
+    })
     const decision = decidedOf(subject, stepOf(state, childTimerEvent('backoff', childId, 1, 10)))
 
     const started = startIdsOf(commandsOf(decision))

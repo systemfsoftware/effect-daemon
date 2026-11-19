@@ -38,6 +38,27 @@ export const ChildReady = Schema.TaggedStruct('ChildReady', {
 })
 export type ChildReady = typeof ChildReady.Type
 
+export const ChildStandby = Schema.TaggedStruct('ChildStandby', {
+  at: EventTime,
+  childId: ChildId,
+  generation: Generation,
+})
+export type ChildStandby = typeof ChildStandby.Type
+
+export const ChildAcquired = Schema.TaggedStruct('ChildAcquired', {
+  at: EventTime,
+  childId: ChildId,
+  generation: Generation,
+})
+export type ChildAcquired = typeof ChildAcquired.Type
+
+export const ChildReleased = Schema.TaggedStruct('ChildReleased', {
+  at: EventTime,
+  childId: ChildId,
+  generation: Generation,
+})
+export type ChildReleased = typeof ChildReleased.Type
+
 export const ChildTerminated = Schema.TaggedStruct('ChildTerminated', {
   at: EventTime,
   childId: ChildId,
@@ -92,6 +113,9 @@ export const SupervisionEvent = Schema.Union([
   SupervisorStarted,
   ChildStarted,
   ChildReady,
+  ChildStandby,
+  ChildAcquired,
+  ChildReleased,
   ChildTerminated,
   ChildStopped,
   ProbeResult,

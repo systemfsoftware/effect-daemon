@@ -1,5 +1,19 @@
 import { Supervisor } from '@systemfsoftware/effect-daemon-spec'
-import { Cause, Deferred, Duration, Effect, Exit, Layer, Match, Option, Ref, Result, Scope } from 'effect'
+import {
+  Cause,
+  Deferred,
+  Duration,
+  Effect,
+  Exit,
+  Layer,
+  Match,
+  Option,
+  Queue,
+  Ref,
+  Result,
+  Scope,
+  Stream,
+} from 'effect'
 import { EntityId, Sharding } from 'effect/cluster'
 import { absurd } from 'effect/Function'
 import type { ClusterProgram, ClusterProgramRequirements, EntityChild, SingletonChild } from './ClusterProgram.js'
@@ -30,6 +44,7 @@ const clusterStarted = (
   ended: Deferred.Deferred<Supervisor.Medium.TerminationReason>,
   stopping: Ref.Ref<boolean>,
   probe: Effect.Effect<boolean, never, ClusterMediumRequirement>,
+  activity?: Supervisor.Medium.StartedActivity,
 ): ClusterStarted => ({
   ...Supervisor.Medium.started(ready),
   [ClusterStartedTypeId]: ClusterStartedTypeId,
@@ -37,6 +52,7 @@ const clusterStarted = (
   ended,
   stopping,
   probe,
+  ...(activity === undefined ? {} : { activity }),
 })
 
 const isClusterStarted = (evidence: Supervisor.Medium.Started): evidence is ClusterStarted =>
@@ -81,8 +97,43 @@ const reportedOnExit = (
 const ownsSingleton = (sharding: Sharding.Sharding['Service'], name: string, shardGroup: string | undefined) =>
   sharding.hasShardId(sharding.getShardId(EntityId.make(name), shardGroup ?? 'default'))
 
-const readyWhen = (owned: boolean, signalled: Deferred.Deferred<void>): Effect.Effect<void> =>
-  owned ? Deferred.await(signalled) : Effect.void
+const announceAcquire = (changes: Queue.Queue<Supervisor.Medium.MediumActivity>): Effect.Effect<void> =>
+  Queue.offer(changes, { _tag: 'Acquired' }).pipe(Effect.asVoid)
+
+const announcesAcquire = (initiallyStandby: boolean, seen: number): boolean => initiallyStandby || seen > 0
+
+const singletonReady = (
+  signalled: Deferred.Deferred<void>,
+  changes: Queue.Queue<Supervisor.Medium.MediumActivity>,
+): Effect.Effect<void> =>
+  Effect.flatMap(Deferred.isDone(signalled), (alreadySignalled) =>
+    alreadySignalled
+      ? Queue.offer(changes, { _tag: 'Ready' }).pipe(Effect.asVoid)
+      : Effect.asVoid(Deferred.succeed(signalled, void 0)))
+
+const singletonRun = (
+  program: SingletonChild<ClusterMediumRequirement>,
+  signalled: Deferred.Deferred<void>,
+  ended: Deferred.Deferred<Supervisor.Medium.TerminationReason>,
+  stopping: Ref.Ref<boolean>,
+  changes: Queue.Queue<Supervisor.Medium.MediumActivity>,
+  initiallyStandby: boolean,
+  runs: Ref.Ref<number>,
+): Effect.Effect<void, never, ClusterMediumRequirement> =>
+  Effect.gen(function*() {
+    const seen = yield* Ref.getAndUpdate(runs, (count) => count + 1)
+    if (announcesAcquire(initiallyStandby, seen)) {
+      yield* announceAcquire(changes)
+    }
+    yield* program.run(singletonReady(signalled, changes))
+  }).pipe(
+    Effect.onExit((exit) =>
+      Effect.flatMap(Ref.get(stopping), (stopped) =>
+        lostItsShard(stopped, exit)
+          ? Effect.asVoid(Queue.offer(changes, { _tag: 'Released' }))
+          : reportedOnExit(ended, stopping)(exit))
+    ),
+  )
 
 const startSingleton = (
   program: SingletonChild<ClusterMediumRequirement>,
@@ -95,15 +146,22 @@ const startSingleton = (
     const ended = yield* Deferred.make<Supervisor.Medium.TerminationReason>()
     const stopping = yield* Ref.make(false)
     const sharding = yield* Sharding.Sharding
-    const run = program.run(Deferred.succeed(signalled, void 0)).pipe(
-      Effect.onExit(reportedOnExit(ended, stopping)),
-    )
+    const changes = yield* Queue.unbounded<Supervisor.Medium.MediumActivity>()
+    const runs = yield* Ref.make(0)
+    const initiallyStandby = ownsSingleton(sharding, program.name, shardGroup) === false
+    const run = singletonRun(program, signalled, ended, stopping, changes, initiallyStandby, runs)
     yield* sharding.registerSingleton(program.name, run, { shardGroup }).pipe(
       Effect.provideService(Scope.Scope, registration),
     )
-    const ready = readyWhen(ownsSingleton(sharding, program.name, shardGroup), signalled)
     const probe = Deferred.isDone(ended).pipe(Effect.map((done) => done === false))
-    return clusterStarted(ready, registration, ended, stopping, probe)
+    return clusterStarted(
+      Deferred.await(signalled),
+      registration,
+      ended,
+      stopping,
+      probe,
+      { initiallyStandby, changes: Stream.fromQueue(changes) },
+    )
   })
 
 const startEntity = (

@@ -75,6 +75,12 @@ const eventOf = (event: Event): ObservedEvent =>
       observedEvent('ChildStarted', childRef(started.childId, started.generation), null)),
     Match.tag('ChildReady', (ready) =>
       observedEvent('ChildReady', childRef(ready.childId, ready.generation), null)),
+    Match.tag('ChildStandby', (standby) =>
+      observedEvent('ChildStandby', childRef(standby.childId, standby.generation), null)),
+    Match.tag('ChildAcquired', (acquired) =>
+      observedEvent('ChildAcquired', childRef(acquired.childId, acquired.generation), null)),
+    Match.tag('ChildReleased', (released) =>
+      observedEvent('ChildReleased', childRef(released.childId, released.generation), null)),
     Match.tag(
       'ChildTerminated',
       (terminated) =>
@@ -90,14 +96,17 @@ const eventOf = (event: Event): ObservedEvent =>
       observedEvent('ProbeResult', childRef(probe.childId, probe.generation), null)),
     Match.tag('TimerElapsed', (timer) =>
       observedEvent('TimerElapsed', timerChildOf(timer.target), null)),
-    Match.tag('DynamicStartRequested', () => observedEvent('DynamicStartRequested', null, null)),
+    Match.tag('DynamicStartRequested', () =>
+      observedEvent('DynamicStartRequested', null, null)),
     Match.tag(
       'DynamicStopRequested',
-      (stopping) => observedEvent('DynamicStopRequested', childRef(stopping.childId, stopping.generation), null),
+      (stopping) =>
+        observedEvent('DynamicStopRequested', childRef(stopping.childId, stopping.generation), null),
     ),
     Match.tag(
       'ShutdownRequested',
-      (shutdown) => observedEvent('ShutdownRequested', null, reasonKindOf(shutdown.reason)),
+      (shutdown) =>
+        observedEvent('ShutdownRequested', null, reasonKindOf(shutdown.reason)),
     ),
     Match.exhaustive,
   )
