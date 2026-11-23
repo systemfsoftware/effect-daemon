@@ -18,7 +18,7 @@ permissions:
 jobs:
   release:
     if: github.ref == 'refs/heads/main'
-    uses: systemfsoftware/pnpm-release-management/.github/workflows/release.yml@1e897828d917341fb7dd444c7bbd6cfa0998caa9
+    uses: systemfsoftware/pnpm-release-management/.github/workflows/release.yml@8a102f2d4a47fef2e33c816f422293fafb40b6a5
     with:
       ci-workflow: ci.yml
       npm-publish: true
