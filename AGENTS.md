@@ -1,3 +1,5 @@
+@repos/constitution/WORKING.md
+
 # effect-daemon
 
 Effect daemons: the daemon spec and conformance suite, and the process, socket and cluster media.
@@ -44,7 +46,7 @@ nix develop --accept-flake-config --command pnpm install
 
 ## Routing
 
-| Doc                                 | Trigger                                                                                                                                         |
-| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CONSTITUTION.md`                   | architecture changes, rule authoring, or design disputes                                                                                        |
-| `repos/constitution/ENFORCEMENT.md` | building or changing an instrument that grades work (lint gates, stream rules, CI checks, thresholds, rubrics, advisors); situational read only |
+| Doc                                                                         | Trigger                                                                      |
+| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `repos/constitution/CODING_STANDARDS.md` and `repos/constitution/REVIEW.md` | you plan, write, review or propose a test                                    |
+| `repos/constitution/GRADERS.md`                                             | you build or change a check (a lint rule, CI job, hook, threshold or rubric) |
